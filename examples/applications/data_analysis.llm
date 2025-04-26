@@ -1,0 +1,321 @@
+// data_analysis.llm - A data analysis application in LLM.lang
+// This example demonstrates advanced features of LLM.lang in a practical scenario
+
+context DataAnalysisApp {
+    // Main function - entry point of the application
+    fn main() {
+        print("=== LLM.lang Data Analysis Application ===\n");
+        
+        // Load the dataset
+        var dataset = loadDataset("sales_data.csv");
+        print("Loaded dataset with " + toString(dataset.rowCount) + " rows and " + 
+              toString(dataset.columnCount) + " columns.");
+        
+        // Analyze the dataset using different approaches
+        analyzeDataset(dataset);
+        
+        // Generate a report
+        generateReport(dataset);
+        
+        print("\nData analysis completed successfully!");
+    }
+    
+    // Load a dataset from a CSV file
+    fn loadDataset(filename: String) -> DataFrame {
+        print("Loading dataset from " + filename + "...");
+        
+        // In a real implementation, this would read the CSV file
+        // For this example, we'll create a synthetic dataset
+        
+        // Remember the dataset metadata in semantic memory
+        @remember datasetMetadata = {
+            "name": "Sales Data",
+            "description": "Monthly sales data by product category and region",
+            "timeRange": "Jan 2024 - Mar 2025",
+            "categories": ["Electronics", "Clothing", "Food", "Home"],
+            "regions": ["North", "South", "East", "West"]
+        };
+        
+        // Create a synthetic dataset
+        return createSyntheticDataset();
+    }
+    
+    // Create a synthetic dataset for demonstration purposes
+    fn createSyntheticDataset() -> DataFrame {
+        // Create a new DataFrame
+        var df = DataFrame.new();
+        
+        // Add columns
+        df.addColumn("Date", "String");
+        df.addColumn("Region", "String");
+        df.addColumn("Category", "String");
+        df.addColumn("Sales", "Float");
+        df.addColumn("Units", "Int");
+        
+        // Add some sample data
+        // In a real implementation, this would be more extensive
+        df.addRow(["2024-01", "North", "Electronics", 12500.0, 250]);
+        df.addRow(["2024-01", "South", "Electronics", 9800.0, 196]);
+        df.addRow(["2024-01", "East", "Electronics", 11200.0, 224]);
+        df.addRow(["2024-01", "West", "Electronics", 13100.0, 262]);
+        
+        df.addRow(["2024-01", "North", "Clothing", 8200.0, 410]);
+        df.addRow(["2024-01", "South", "Clothing", 7600.0, 380]);
+        df.addRow(["2024-01", "East", "Clothing", 9100.0, 455]);
+        df.addRow(["2024-01", "West", "Clothing", 8400.0, 420]);
+        
+        // Add more rows for other months and categories...
+        
+        return df;
+    }
+    
+    // Analyze the dataset using different approaches
+    fn analyzeDataset(dataset: DataFrame) {
+        print("\n=== Dataset Analysis ===");
+        
+        // Use parallel execution to try different analysis approaches
+        parallel {
+            path1: {
+                // First approach: Statistical analysis
+                print("\nPath 1: Statistical Analysis");
+                performStatisticalAnalysis(dataset);
+            }
+            
+            path2: {
+                // Second approach: Time series analysis
+                print("\nPath 2: Time Series Analysis");
+                performTimeSeriesAnalysis(dataset);
+            }
+            
+            path3: {
+                // Third approach: Regional comparison
+                print("\nPath 3: Regional Comparison");
+                performRegionalComparison(dataset);
+            }
+        } select all;
+        
+        // Use natural language to express a complex query
+        print("\n=== Natural Language Query ===");
+        var result = #"Find the top-performing product category in each region based on total sales"#;
+        
+        // This would be processed by the NLP engine and converted to a query
+        print("Query result: " + toString(result));
+    }
+    
+    // Perform statistical analysis on the dataset
+    fn performStatisticalAnalysis(dataset: DataFrame) {
+        // Create a context for statistical analysis
+        with context "StatisticalAnalysis" {
+            // Calculate basic statistics
+            var salesStats = calculateStatistics(dataset, "Sales");
+            var unitsStats = calculateStatistics(dataset, "Units");
+            
+            // Print the results
+            print("Sales statistics:");
+            print("  Mean: " + toString(salesStats.mean));
+            print("  Median: " + toString(salesStats.median));
+            print("  Standard Deviation: " + toString(salesStats.stdDev));
+            
+            print("Units statistics:");
+            print("  Mean: " + toString(unitsStats.mean));
+            print("  Median: " + toString(unitsStats.median));
+            print("  Standard Deviation: " + toString(unitsStats.stdDev));
+            
+            // Remember the results for later use
+            @remember salesStatistics = salesStats;
+            @remember unitsStatistics = unitsStats;
+        }
+    }
+    
+    // Calculate statistics for a column
+    fn calculateStatistics(dataset: DataFrame, column: String) -> Statistics {
+        // In a real implementation, this would calculate actual statistics
+        // For this example, we'll return synthetic values
+        
+        if (column == "Sales") {
+            return {
+                "mean": 9500.0,
+                "median": 9200.0,
+                "stdDev": 1800.0,
+                "min": 5200.0,
+                "max": 15300.0
+            };
+        } else if (column == "Units") {
+            return {
+                "mean": 350,
+                "median": 325,
+                "stdDev": 85,
+                "min": 150,
+                "max": 550
+            };
+        } else {
+            return {
+                "mean": 0.0,
+                "median": 0.0,
+                "stdDev": 0.0,
+                "min": 0.0,
+                "max": 0.0
+            };
+        }
+    }
+    
+    // Perform time series analysis on the dataset
+    fn performTimeSeriesAnalysis(dataset: DataFrame) {
+        // Create a context for time series analysis
+        with context "TimeSeriesAnalysis" {
+            // Group data by date
+            var timeSeriesData = dataset.groupBy("Date").sum("Sales");
+            
+            // Calculate trend
+            var trend = calculateTrend(timeSeriesData);
+            
+            // Print the results
+            print("Time series analysis:");
+            print("  Trend: " + trend.direction + " (" + toString(trend.percentage) + "%)");
+            print("  Seasonality: " + trend.seasonality);
+            
+            // Remember the results for later use
+            @remember timeSeriesTrend = trend;
+        }
+    }
+    
+    // Calculate trend from time series data
+    fn calculateTrend(timeSeriesData) -> Trend {
+        // In a real implementation, this would calculate actual trend
+        // For this example, we'll return synthetic values
+        
+        return {
+            "direction": "upward",
+            "percentage": 12.5,
+            "seasonality": "quarterly peaks"
+        };
+    }
+    
+    // Perform regional comparison on the dataset
+    fn performRegionalComparison(dataset: DataFrame) {
+        // Create a context for regional comparison
+        with context "RegionalComparison" {
+            // Group data by region
+            var regionalData = dataset.groupBy("Region").sum("Sales");
+            
+            // Find the top-performing region
+            var topRegion = findTopPerformer(regionalData);
+            
+            // Print the results
+            print("Regional comparison:");
+            print("  Top-performing region: " + topRegion.name + " (" + toString(topRegion.sales) + ")");
+            print("  Regional distribution: North (28%), South (22%), East (24%), West (26%)");
+            
+            // Remember the results for later use
+            @remember regionalPerformance = {
+                "topRegion": topRegion,
+                "distribution": {
+                    "North": 28,
+                    "South": 22,
+                    "East": 24,
+                    "West": 26
+                }
+            };
+        }
+    }
+    
+    // Find the top performer from data
+    fn findTopPerformer(data) -> Performer {
+        // In a real implementation, this would find the actual top performer
+        // For this example, we'll return a synthetic value
+        
+        return {
+            "name": "North",
+            "sales": 125000.0,
+            "percentage": 28
+        };
+    }
+    
+    // Generate a report based on the analysis
+    fn generateReport(dataset: DataFrame) {
+        print("\n=== Generating Report ===");
+        
+        // Use example-driven programming to format the report sections
+        examples for formatSection {
+            ["Statistical Analysis", "Mean sales: $9,500"] -> 
+                "## Statistical Analysis\n\nMean sales: $9,500\n";
+            
+            ["Time Series", "Upward trend (12.5%)"] -> 
+                "## Time Series\n\nUpward trend (12.5%)\n";
+        }
+        
+        // Start building the report
+        var report = "# Sales Data Analysis Report\n\n";
+        
+        // Add metadata section
+        report += "## Dataset Information\n\n";
+        report += "Dataset: " + @recall("datasetMetadata").name + "\n";
+        report += "Time Range: " + @recall("datasetMetadata").timeRange + "\n";
+        report += "Categories: " + toString(@recall("datasetMetadata").categories) + "\n";
+        report += "Regions: " + toString(@recall("datasetMetadata").regions) + "\n\n";
+        
+        // Add statistical analysis section
+        within "StatisticalAnalysis" {
+            report += formatSection("Statistical Analysis", 
+                "Mean sales: $" + toString(salesStatistics.mean) + "\n" +
+                "Median sales: $" + toString(salesStatistics.median) + "\n" +
+                "Standard deviation: $" + toString(salesStatistics.stdDev));
+        }
+        
+        // Add time series analysis section
+        within "TimeSeriesAnalysis" {
+            report += formatSection("Time Series Analysis", 
+                "Trend: " + timeSeriesTrend.direction + " (" + toString(timeSeriesTrend.percentage) + "%)\n" +
+                "Seasonality: " + timeSeriesTrend.seasonality);
+        }
+        
+        // Add regional comparison section
+        within "RegionalComparison" {
+            report += formatSection("Regional Comparison", 
+                "Top-performing region: " + regionalPerformance.topRegion.name + " ($" + 
+                toString(regionalPerformance.topRegion.sales) + ")\n" +
+                "Regional distribution: North (" + toString(regionalPerformance.distribution.North) + "%), " +
+                "South (" + toString(regionalPerformance.distribution.South) + "%), " +
+                "East (" + toString(regionalPerformance.distribution.East) + "%), " +
+                "West (" + toString(regionalPerformance.distribution.West) + "%)");
+        }
+        
+        // Add recommendations section using vector-guided content generation
+        report += "## Recommendations\n\n";
+        
+        // Create vectors for different business aspects
+        vector salesOptimization = embed("sales optimization strategies retail");
+        vector inventoryManagement = embed("inventory management efficiency");
+        vector customerExperience = embed("customer experience improvement");
+        
+        // Combine vectors with different weights based on analysis results
+        vector recommendationFocus = salesOptimization * 0.5 + 
+                                     inventoryManagement * 0.3 + 
+                                     customerExperience * 0.2;
+        
+        // Generate recommendations guided by the combined vector
+        apply recommendationFocus to {
+            report += "1. Focus on expanding the Electronics category in the North region, which shows the highest profit margin.\n";
+            report += "2. Implement inventory optimization for the South region to reduce overstock situations.\n";
+            report += "3. Develop targeted marketing campaigns for seasonal peaks identified in the time series analysis.\n";
+            report += "4. Consider product bundling strategies to increase average transaction value.\n";
+            report += "5. Invest in staff training for high-performing regions to maintain competitive advantage.\n\n";
+        }
+        
+        // Add conclusion
+        report += "## Conclusion\n\n";
+        report += "The analysis indicates a positive trend in sales with significant regional variations. ";
+        report += "The North region consistently outperforms other regions, particularly in the Electronics category. ";
+        report += "Seasonal patterns suggest opportunities for targeted promotions during peak periods.\n";
+        
+        // Print the report
+        print("\nGenerated Report Preview:");
+        print("-------------------------");
+        print(report.substring(0, 500) + "...");
+        print("-------------------------");
+        print("Full report length: " + toString(report.length) + " characters");
+        
+        // In a real implementation, this would save the report to a file
+        // saveReport(report, "sales_analysis_report.md");
+    }
+}

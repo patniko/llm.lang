@@ -1,0 +1,92 @@
+[package]
+name = "llm_lang"
+version = "0.1.0"
+edition = "2021"
+authors = ["LLM.lang Contributors"]
+description = "A programming language optimized for Large Language Models"
+repository = "https://github.com/llm-lang/llm.lang"
+license = "MIT"
+readme = "README.md"
+keywords = ["language", "compiler", "interpreter", "llm", "ai"]
+categories = ["compilers", "development-tools", "parser-implementations"]
+
+[lib]
+name = "llm_lang"
+path = "src/lib.rs"
+
+[[bin]]
+name = "llmc"
+path = "src/bin/llmc.rs"
+
+[[bin]]
+name = "llmi"
+path = "src/bin/llmi.rs"
+
+[dependencies]
+# Core dependencies
+clap = { version = "4.3", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+anyhow = "1.0"
+log = "0.4"
+env_logger = "0.10"
+colored = "2.0"
+
+# Lexer and parser
+logos = "0.13"
+chumsky = "0.9"
+
+# NLP dependencies
+rust-bert = "0.20"
+tokenizers = "0.13"
+rust_tokenizers = "8.0"
+
+# Vector operations
+ndarray = "0.15"
+faiss = "0.10"  # For vector similarity search
+
+# Async runtime
+tokio = { version = "1.28", features = ["full"] }
+async-trait = "0.1"
+
+# Interoperability
+pyo3 = { version = "0.18", features = ["auto-initialize"], optional = true }
+deno_core = { version = "0.177", optional = true }
+
+[dev-dependencies]
+criterion = "0.4"
+pretty_assertions = "1.3"
+tempfile = "3.5"
+test-case = "3.1"
+
+[features]
+default = []
+python_interop = ["pyo3"]
+javascript_interop = ["deno_core"]
+full = ["python_interop", "javascript_interop"]
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
+debug = false
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[profile.test]
+opt-level = 0
+debug = true
+
+[workspace]
+members = [
+    ".",
+    "tools/llm_lang_lsp",
+    "tools/llm_lang_fmt",
+]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

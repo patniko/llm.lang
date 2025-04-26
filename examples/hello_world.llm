@@ -1,0 +1,152 @@
+// hello_world.llm - A simple "Hello, World!" program in LLM.lang
+
+context MainProgram {
+    // Main function - entry point of the program
+    fn main() {
+        // Print a simple greeting
+        print("Hello, World from LLM.lang!");
+        
+        // Demonstrate some basic language features
+        demonstrateVariables();
+        demonstrateContextAwareness();
+        demonstrateNaturalLanguage();
+        demonstrateExampleDriven();
+        demonstrateParallelExecution();
+        demonstrateVectorOperations();
+    }
+    
+    // Demonstrate variable declarations and assignments
+    fn demonstrateVariables() {
+        print("\n=== Variables ===");
+        
+        // Static typing
+        Int age = 30;
+        String name = "LLM.lang";
+        Bool isAwesome = true;
+        
+        // Dynamic typing
+        var version = 1.0;
+        
+        // Semantic typing
+        ~ProgrammingLanguage~ language = "LLM.lang";
+        
+        // Print the variables
+        print("Name: " + name);
+        print("Age: " + toString(age));
+        print("Is Awesome: " + toString(isAwesome));
+        print("Version: " + toString(version));
+        print("Language: " + language);
+    }
+    
+    // Demonstrate context awareness
+    fn demonstrateContextAwareness() {
+        print("\n=== Context Awareness ===");
+        
+        // Remember a value in the semantic memory
+        @remember currentLanguage = "LLM.lang";
+        
+        // Create a new context
+        with context "GreetingContext" {
+            // Define a variable in this context
+            var greeting = "Hello from a different context!";
+            print(greeting);
+            
+            // Access the remembered value
+            print("Current language (from memory): " + @recall);
+        }
+        
+        // Switch back to the original context
+        // The greeting variable is not accessible here
+        
+        // But we can access the context by name
+        within "GreetingContext" {
+            print("Greeting (accessed from another context): " + greeting);
+        }
+    }
+    
+    // Demonstrate natural language integration
+    fn demonstrateNaturalLanguage() {
+        print("\n=== Natural Language Integration ===");
+        
+        // Use natural language to express a query
+        var users = #"Find all users who signed up in the last 7 days"#;
+        
+        // This would be processed by the NLP engine and converted to a query
+        print("Query result: " + toString(users));
+        
+        // Use intent-based programming
+        intent: create a greeting message for the user;
+        
+        // This would generate code based on the intent
+        print("Generated greeting: Hello, user! Welcome to LLM.lang!");
+    }
+    
+    // Demonstrate example-driven programming
+    fn demonstrateExampleDriven() {
+        print("\n=== Example-Driven Programming ===");
+        
+        // Define a function by examples
+        examples for capitalize {
+            "hello" -> "Hello";
+            "world" -> "World";
+            "llm.lang" -> "Llm.lang";
+        }
+        
+        // Use the function defined by examples
+        print("Capitalized 'hello': " + capitalize("hello"));
+        print("Capitalized 'llm.lang': " + capitalize("llm.lang"));
+        
+        // Define a transformation by examples
+        examples for pluralize {
+            "apple" -> "apples";
+            "language" -> "languages";
+            "box" -> "boxes";
+        }
+        
+        print("Pluralized 'language': " + pluralize("language"));
+    }
+    
+    // Demonstrate parallel execution
+    fn demonstrateParallelExecution() {
+        print("\n=== Parallel Execution ===");
+        
+        // Execute multiple approaches in parallel
+        var result = parallel {
+            path1: {
+                // First approach: direct calculation
+                print("Path 1: Direct calculation");
+                return 42;
+            }
+            
+            path2: {
+                // Second approach: step-by-step calculation
+                print("Path 2: Step-by-step calculation");
+                var step1 = 10 + 10;
+                var step2 = step1 * 2;
+                return step2 + 2;
+            }
+        } select fastest;
+        
+        print("Parallel execution result: " + toString(result));
+    }
+    
+    // Demonstrate vector operations
+    fn demonstrateVectorOperations() {
+        print("\n=== Vector Operations ===");
+        
+        // Create a vector embedding from text
+        vector concept1 = embed("database optimization");
+        vector concept2 = embed("query performance");
+        
+        // Combine vectors
+        vector combined = concept1 * 0.7 + concept2 * 0.3;
+        
+        // Apply the vector to generate content
+        print("Generated content based on vector:");
+        
+        apply combined to {
+            // This block would be influenced by the combined vector
+            print("To optimize database performance, consider indexing frequently queried columns and analyzing query execution plans.");
+        }
+    }
+}
