@@ -2,6 +2,28 @@
 
 LLM.lang is a programming language specifically designed for Large Language Models (LLMs). It combines the best features of popular programming languages with novel constructs that leverage the unique capabilities of LLMs, creating a language that is both powerful and intuitive for AI-driven development.
 
+## Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/llm-lang/llm.lang.git
+cd llm.lang
+
+# Build the project
+cargo build --release
+
+# Run an example
+./scripts/run_example.sh examples/hello_world.llm
+
+# Try the features demonstration
+./scripts/run_example.sh examples/llm_features.llm
+
+# Start the interactive interpreter
+./target/release/llmi -i
+```
+
+For more detailed instructions, see the [Getting Started Guide](docs/getting_started.md).
+
 ## Features
 
 ### Contextual Awareness

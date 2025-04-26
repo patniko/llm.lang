@@ -1,0 +1,239 @@
+// llm_features.llm - A demonstration of LLM.lang's unique features
+// This example showcases the key features that make LLM.lang special
+
+context MainProgram {
+    // Main function - entry point of the program
+    fn main() {
+        print("=== LLM.lang Features Demonstration ===\n");
+        
+        // Demonstrate contextual awareness
+        demonstrateContexts();
+        
+        // Demonstrate semantic memory
+        demonstrateSemanticMemory();
+        
+        // Demonstrate natural language integration
+        demonstrateNaturalLanguage();
+        
+        // Demonstrate example-driven programming
+        demonstrateExampleDriven();
+        
+        // Demonstrate parallel execution
+        demonstrateParallelExecution();
+        
+        // Demonstrate vector operations
+        demonstrateVectorOperations();
+        
+        print("\nAll features demonstrated successfully!");
+    }
+    
+    // Demonstrate contextual awareness
+    fn demonstrateContexts() {
+        print("\n=== Contextual Awareness ===");
+        
+        // Create a new context
+        with context "UserProfile" {
+            var name = "Alice";
+            var age = 30;
+            var preferences = ["reading", "hiking", "coding"];
+            
+            print("Created user profile for " + name);
+            
+            // Define a function within this context
+            fn formatProfile() -> String {
+                return name + " (" + toString(age) + ") likes " + toString(preferences);
+            }
+            
+            // Call the function
+            print("Profile: " + formatProfile());
+        }
+        
+        // Later, access the context by name
+        within "UserProfile" {
+            // We can access variables and functions defined in this context
+            print("Accessing user profile again: " + formatProfile());
+            
+            // Update a variable
+            age = 31;
+            print("Updated profile: " + formatProfile());
+        }
+    }
+    
+    // Demonstrate semantic memory
+    fn demonstrateSemanticMemory() {
+        print("\n=== Semantic Memory ===");
+        
+        // Remember values in semantic memory
+        @remember currentUser = "Alice";
+        @remember userPreferences = ["reading", "hiking", "coding"];
+        @remember userStats = {
+            "loginCount": 42,
+            "lastLogin": "2025-04-26",
+            "accountType": "premium"
+        };
+        
+        print("Stored user information in semantic memory");
+        
+        // Do some other operations...
+        print("Performing other operations...");
+        
+        // Later, recall the values without explicit references
+        print("Current user: " + @recall);  // Retrieves the most relevant value (currentUser)
+        print("User preferences: " + toString(@recall("userPreferences")));
+        print("User login count: " + toString(@recall("userStats").loginCount));
+    }
+    
+    // Demonstrate natural language integration
+    fn demonstrateNaturalLanguage() {
+        print("\n=== Natural Language Integration ===");
+        
+        // Use natural language to express a query
+        var activeUsers = #"Find all users who logged in during the last week and have premium accounts"#;
+        
+        // This would be processed by the NLP engine and converted to a query
+        print("Query result: " + toString(activeUsers));
+        
+        // Use intent-based programming
+        intent: create a personalized recommendation system based on user preferences;
+        
+        // This would generate code based on the intent
+        print("Generated recommendation system:");
+        print("  - Analyzing user preferences");
+        print("  - Finding similar users");
+        print("  - Generating recommendations based on collaborative filtering");
+    }
+    
+    // Demonstrate example-driven programming
+    fn demonstrateExampleDriven() {
+        print("\n=== Example-Driven Programming ===");
+        
+        // Define a function by examples
+        examples for pluralize {
+            "book" -> "books";
+            "box" -> "boxes";
+            "child" -> "children";
+            "person" -> "people";
+            "sheep" -> "sheep";
+        }
+        
+        // Use the function defined by examples
+        print("Pluralize 'book': " + pluralize("book"));
+        print("Pluralize 'child': " + pluralize("child"));
+        print("Pluralize 'sheep': " + pluralize("sheep"));
+        
+        // The function generalizes to new inputs
+        print("Pluralize 'computer': " + pluralize("computer"));
+        print("Pluralize 'city': " + pluralize("city"));
+        
+        // Define a transformation by examples
+        examples for titleCase {
+            "hello world" -> "Hello World";
+            "llm.lang features" -> "Llm.lang Features";
+            "example-driven programming" -> "Example-Driven Programming";
+        }
+        
+        print("Title case 'hello world': " + titleCase("hello world"));
+        print("Title case 'natural language processing': " + titleCase("natural language processing"));
+    }
+    
+    // Demonstrate parallel execution
+    fn demonstrateParallelExecution() {
+        print("\n=== Parallel Execution ===");
+        
+        // Define a problem to solve
+        var numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        print("Finding the sum of squares for " + toString(numbers));
+        
+        // Execute multiple approaches in parallel
+        var result = parallel {
+            path1: {
+                // First approach: direct calculation
+                print("Path 1: Direct calculation");
+                var sum = 0;
+                for (num in numbers) {
+                    sum += num * num;
+                }
+                return sum;
+            }
+            
+            path2: {
+                // Second approach: functional style
+                print("Path 2: Functional style");
+                return numbers.map(n => n * n).reduce((a, b) => a + b, 0);
+            }
+            
+            path3: {
+                // Third approach: mathematical formula
+                print("Path 3: Mathematical formula");
+                var n = numbers.length;
+                return (n * (n + 1) * (2 * n + 1)) / 6;
+            }
+        } select best;
+        
+        print("Result: " + toString(result));
+        
+        // Another example with different selection strategy
+        print("\nSolving a complex problem with multiple approaches:");
+        
+        var solution = parallel {
+            path1: {
+                print("Path 1: Brute force approach");
+                // Simulate a slow but accurate approach
+                return "Detailed solution with 98% accuracy";
+            }
+            
+            path2: {
+                print("Path 2: Heuristic approach");
+                // Simulate a faster but less accurate approach
+                return "Approximate solution with 85% accuracy";
+            }
+            
+            path3: {
+                print("Path 3: Hybrid approach");
+                // Simulate a balanced approach
+                return "Balanced solution with 92% accuracy";
+            }
+        } select fastest;
+        
+        print("Selected solution: " + solution);
+    }
+    
+    // Demonstrate vector operations
+    fn demonstrateVectorOperations() {
+        print("\n=== Vector Operations ===");
+        
+        // Create vector embeddings from text
+        vector programming = embed("computer programming software development coding");
+        vector database = embed("database SQL queries tables records");
+        vector ai = embed("artificial intelligence machine learning neural networks");
+        
+        print("Created vector embeddings for different concepts");
+        
+        // Combine vectors with different weights
+        vector combined = programming * 0.5 + database * 0.3 + ai * 0.2;
+        
+        print("Combined vector: programming (50%) + database (30%) + AI (20%)");
+        
+        // Apply the vector to guide content generation
+        print("\nGenerated content based on the combined vector:");
+        
+        apply combined to {
+            // This block is influenced by the combined vector
+            print("Developing a database-backed application that incorporates machine learning");
+            print("requires understanding how to efficiently store and query data while");
+            print("integrating AI models into your software architecture. Consider using");
+            print("an ORM framework to bridge the gap between your application code and");
+            print("the database, while leveraging ML libraries for the AI components.");
+        }
+        
+        // Calculate similarity between vectors
+        var sim1 = similarity(programming, database);
+        var sim2 = similarity(programming, ai);
+        var sim3 = similarity(database, ai);
+        
+        print("\nSimilarity between concepts:");
+        print("Programming <-> Database: " + toString(sim1));
+        print("Programming <-> AI: " + toString(sim2));
+        print("Database <-> AI: " + toString(sim3));
+    }
+}
