@@ -225,6 +225,8 @@ impl Engine {
             NodeKind::Path => Ok(Value::Void), // Paths are handled by the parallel statement
             NodeKind::Apply => self.execute_apply(node),
             NodeKind::Semantic => self.execute_semantic(node),
+            NodeKind::Examples => self.execute_examples(node),
+            NodeKind::Example => self.execute_example(node),
             NodeKind::Assignment => self.execute_assignment(node),
             NodeKind::Binary => self.execute_binary(node),
             NodeKind::Unary => self.execute_unary(node),
@@ -1221,6 +1223,50 @@ impl Engine {
         })?;
         
         self.execute_node(expression)
+    }
+    
+    /// Execute an examples node
+    fn execute_examples(&mut self, node: &Node) -> Result<Value, RuntimeError> {
+        // Get the function name
+        let function_name = node.get_attribute("function").ok_or_else(|| {
+            RuntimeError::missing_attribute("function", node.location.clone())
+        })?;
+        
+        // Create a function from the examples
+        let mut examples = Vec::new();
+        
+        // Process each example
+        for child in &node.children {
+            if child.kind == NodeKind::Example {
+                // Get the input and output
+                let input = child.get_child(0).ok_or_else(|| {
+                    RuntimeError::missing_child(0, child.location.clone())
+                })?;
+                
+                let output = child.get_child(1).ok_or_else(|| {
+                    RuntimeError::missing_child(1, child.location.clone())
+                })?;
+                
+                // Execute the input and output
+                let input_value = self.execute_node(input)?;
+                let output_value = self.execute_node(output)?;
+                
+                // Add the example
+                examples.push((input_value, output_value));
+            }
+        }
+        
+        // Register the function with the example executor
+        self.example.register_function(function_name, examples);
+        
+        // Return the function
+        Ok(Value::Function(function_name.clone()))
+    }
+    
+    /// Execute an example node
+    fn execute_example(&mut self, node: &Node) -> Result<Value, RuntimeError> {
+        // Examples are handled by the examples statement
+        Ok(Value::Void)
     }
     
     /// Check if a value is truthy

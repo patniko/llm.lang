@@ -144,6 +144,15 @@ impl Example {
         }
     }
     
+    /// Register a function with examples
+    pub fn register_function(&mut self, function_name: &str, examples: Vec<(Value, Value)>) {
+        // Clear any existing examples
+        self.clear_examples();
+        
+        // Add the new examples
+        self.learn(examples);
+    }
+    
     /// Generalize from examples
     pub fn generalize(&self, inputs: Vec<Value>) -> Result<Vec<Value>, RuntimeError> {
         let mut outputs = Vec::new();

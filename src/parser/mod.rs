@@ -287,6 +287,9 @@ impl Parser {
         } else if self.match_keyword("when") {
             // Parse a when statement
             self.parse_when_statement()
+        } else if self.match_keyword("examples") {
+            // Parse an examples statement
+            self.parse_examples_statement()
         } else if self.match_keyword("for") {
             // Parse a for statement
             self.parse_for_statement()
@@ -799,6 +802,74 @@ impl Parser {
         path.children.push(Box::new(body));
         
         Ok(path)
+    }
+    
+    /// Parse an examples statement
+    fn parse_examples_statement(&mut self) -> ParserResult<Node> {
+        // We've already consumed the "examples" keyword
+        
+        // Parse the "for" keyword
+        self.consume_keyword("for", "Expected 'for' after 'examples'")?;
+        
+        // Parse the function name
+        let name = self.consume_identifier("Expected function name after 'examples for'")?;
+        
+        // Parse the examples body
+        self.consume_delimiter("{", "Expected '{' after function name")?;
+        
+        // Create an examples node
+        let location = self.current_location();
+        let mut examples = Node {
+            kind: NodeKind::Examples,
+            location,
+            children: Vec::new(),
+            attributes: std::collections::HashMap::new(),
+        };
+        
+        // Add the function name attribute
+        examples.attributes.insert("function".to_string(), name.value);
+        
+        // Parse examples until we reach the end of the examples block
+        while !self.check_delimiter("}") && !self.is_at_end() {
+            // Parse an example
+            let example = self.parse_example()?;
+            examples.children.push(Box::new(example));
+        }
+        
+        // Consume the closing brace
+        self.consume_delimiter("}", "Expected '}' after examples")?;
+        
+        Ok(examples)
+    }
+    
+    /// Parse an example
+    fn parse_example(&mut self) -> ParserResult<Node> {
+        // Parse the input expression
+        let input = self.parse_expression()?;
+        
+        // Parse the arrow
+        self.consume_operator("->", "Expected '->' after input expression")?;
+        
+        // Parse the output expression
+        let output = self.parse_expression()?;
+        
+        // Consume the semicolon
+        self.consume_delimiter(";", "Expected ';' after output expression")?;
+        
+        // Create an example node
+        let location = self.current_location();
+        let mut example = Node {
+            kind: NodeKind::Example,
+            location,
+            children: Vec::new(),
+            attributes: std::collections::HashMap::new(),
+        };
+        
+        // Add the input and output as children
+        example.children.push(Box::new(input));
+        example.children.push(Box::new(output));
+        
+        Ok(example)
     }
     
     /// Parse an apply statement

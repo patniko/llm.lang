@@ -93,6 +93,12 @@ pub enum NodeKind {
     /// A semantic statement
     Semantic,
     
+    /// An examples statement
+    Examples,
+    
+    /// An example
+    Example,
+    
     /// An assignment expression
     Assignment,
     
