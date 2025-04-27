@@ -92,7 +92,7 @@ pub struct Engine {
 impl Engine {
     /// Create a new execution engine
     pub fn new(options: EngineOptions) -> Self {
-        Self {
+        let mut engine = Self {
             options,
             memory: Memory::new(),
             context: Context::new(),
@@ -104,6 +104,35 @@ impl Engine {
             start_time: None,
             instructions: 0,
             peak_memory: 0,
+        };
+        
+        // Register standard library functions
+        engine.register_stdlib_functions();
+        
+        engine
+    }
+    
+    /// Register standard library functions
+    fn register_stdlib_functions(&mut self) {
+        // Create a standard library
+        let stdlib = crate::stdlib::StdLib::new();
+        
+        // Register the standard library functions in the global context
+        for (name, _) in &stdlib.functions {
+            // Create a function node
+            let location = crate::utils::SourceLocation::new(0, 0, 0, 0, "stdlib");
+            let mut node = crate::parser::ast::Node {
+                kind: crate::parser::ast::NodeKind::Function,
+                location: location.clone(),
+                children: Vec::new(),
+                attributes: std::collections::HashMap::new(),
+            };
+            
+            // Set the function name
+            node.attributes.insert("name".to_string(), name.clone());
+            
+            // Register the function in the global context
+            self.context.register_function(name, &node);
         }
     }
     
@@ -870,6 +899,13 @@ impl Engine {
         // Call the function
         match callee_value {
             Value::Function(name) => {
+                // Check if it's a standard library function
+                let stdlib = crate::stdlib::StdLib::new();
+                if let Some(function) = stdlib.get_function(&name) {
+                    // Call the standard library function
+                    return function(arguments);
+                }
+                
                 // Look up the function
                 let function = self.context.get_function(&name).ok_or_else(|| {
                     RuntimeError::undefined_function(&name, node.location.clone())

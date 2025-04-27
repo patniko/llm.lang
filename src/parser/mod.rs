@@ -237,7 +237,7 @@ impl Parser {
             Ok(Type::Context)
         } else if self.check_token(TokenKind::SemanticType) {
             let token = self.advance().unwrap();
-            Ok(Type::Semantic(token.value))
+            Ok(Type::Semantic(token.value.clone()))
         } else {
             let token = self.peek().unwrap();
             Err(ParserError::new(
@@ -804,7 +804,7 @@ impl Parser {
         };
         
         // Add the token attribute
-        semantic_statement.attributes.insert("token".to_string(), token.value);
+        semantic_statement.attributes.insert("token".to_string(), token.value.clone());
         
         // Check if it's a remember statement
         if token.value == "@remember" {
@@ -883,7 +883,7 @@ impl Parser {
         } else if self.match_operator("+=") || self.match_operator("-=") || self.match_operator("*=") || self.match_operator("/=") || self.match_operator("%=") {
             // Get the operator
             let token = self.previous().unwrap();
-            let operator = &token.value[0..1]; // Extract the operator without the '='
+            let operator = token.value[0..1].to_string(); // Extract the operator without the '='
             
             // Parse the right-hand side
             let value = self.parse_assignment()?;
@@ -1004,7 +1004,7 @@ impl Parser {
         
         while self.match_operator("==") || self.match_operator("!=") {
             // Get the operator
-            let token = self.previous().unwrap();
+            let token_value = self.previous().unwrap().value.clone();
             
             // Parse the right-hand side
             let right = self.parse_comparison()?;
@@ -1019,7 +1019,7 @@ impl Parser {
             };
             
             // Add the operator attribute
-            binary.attributes.insert("operator".to_string(), token.value);
+            binary.attributes.insert("operator".to_string(), token_value);
             
             // Add the left-hand side as a child
             binary.children.push(Box::new(expr));
@@ -1040,7 +1040,7 @@ impl Parser {
         
         while self.match_operator("<") || self.match_operator(">") || self.match_operator("<=") || self.match_operator(">=") {
             // Get the operator
-            let token = self.previous().unwrap();
+            let token_value = self.previous().unwrap().value.clone();
             
             // Parse the right-hand side
             let right = self.parse_term()?;
@@ -1055,7 +1055,7 @@ impl Parser {
             };
             
             // Add the operator attribute
-            binary.attributes.insert("operator".to_string(), token.value);
+            binary.attributes.insert("operator".to_string(), token_value);
             
             // Add the left-hand side as a child
             binary.children.push(Box::new(expr));
@@ -1076,7 +1076,7 @@ impl Parser {
         
         while self.match_operator("+") || self.match_operator("-") {
             // Get the operator
-            let token = self.previous().unwrap();
+            let token_value = self.previous().unwrap().value.clone();
             
             // Parse the right-hand side
             let right = self.parse_factor()?;
@@ -1091,7 +1091,7 @@ impl Parser {
             };
             
             // Add the operator attribute
-            binary.attributes.insert("operator".to_string(), token.value);
+            binary.attributes.insert("operator".to_string(), token_value);
             
             // Add the left-hand side as a child
             binary.children.push(Box::new(expr));
@@ -1112,7 +1112,7 @@ impl Parser {
         
         while self.match_operator("*") || self.match_operator("/") || self.match_operator("%") {
             // Get the operator
-            let token = self.previous().unwrap();
+            let token_value = self.previous().unwrap().value.clone();
             
             // Parse the right-hand side
             let right = self.parse_unary()?;
@@ -1127,7 +1127,7 @@ impl Parser {
             };
             
             // Add the operator attribute
-            binary.attributes.insert("operator".to_string(), token.value);
+            binary.attributes.insert("operator".to_string(), token_value);
             
             // Add the left-hand side as a child
             binary.children.push(Box::new(expr));
@@ -1147,7 +1147,7 @@ impl Parser {
         if self.match_operator("-") || self.match_operator("!") || self.match_keyword("not") {
             // Get the operator
             let token = self.previous().unwrap();
-            let operator = if token.value == "not" { "!" } else { &token.value };
+            let operator_str = if token.value == "not" { "!".to_string() } else { token.value.clone() };
             
             // Parse the operand
             let operand = self.parse_unary()?;
@@ -1162,7 +1162,7 @@ impl Parser {
             };
             
             // Add the operator attribute
-            unary.attributes.insert("operator".to_string(), operator.to_string());
+            unary.attributes.insert("operator".to_string(), operator_str);
             
             // Add the operand as a child
             unary.children.push(Box::new(operand));
@@ -1315,7 +1315,7 @@ impl Parser {
             literal.attributes.insert("type".to_string(), "Int".to_string());
             
             // Add the value attribute
-            literal.attributes.insert("value".to_string(), token.value);
+            literal.attributes.insert("value".to_string(), token.value.clone());
             
             Ok(literal)
         } else if self.match_token(TokenKind::FloatLiteral) {
@@ -1335,7 +1335,7 @@ impl Parser {
             literal.attributes.insert("type".to_string(), "Float".to_string());
             
             // Add the value attribute
-            literal.attributes.insert("value".to_string(), token.value);
+            literal.attributes.insert("value".to_string(), token.value.clone());
             
             Ok(literal)
         } else if self.match_token(TokenKind::StringLiteral) {
@@ -1355,7 +1355,7 @@ impl Parser {
             literal.attributes.insert("type".to_string(), "String".to_string());
             
             // Add the value attribute
-            literal.attributes.insert("value".to_string(), token.value);
+            literal.attributes.insert("value".to_string(), token.value.clone());
             
             Ok(literal)
         } else if self.match_token(TokenKind::NaturalLanguage) {
@@ -1372,7 +1372,7 @@ impl Parser {
             };
             
             // Add the value attribute
-            natural.attributes.insert("value".to_string(), token.value);
+            natural.attributes.insert("value".to_string(), token.value.clone());
             
             Ok(natural)
         } else if self.match_token(TokenKind::Identifier) {
@@ -1389,7 +1389,7 @@ impl Parser {
             };
             
             // Add the name attribute
-            identifier.attributes.insert("name".to_string(), token.value);
+            identifier.attributes.insert("name".to_string(), token.value.clone());
             
             Ok(identifier)
         } else if self.match_delimiter("(") {

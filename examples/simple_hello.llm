@@ -1,0 +1,7 @@
+// A minimal Hello World program in LLM.lang
+
+context MainProgram {
+    fn main() {
+        print("Hello, World!");
+    }
+}

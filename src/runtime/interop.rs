@@ -96,7 +96,14 @@ impl Interop {
         let output = self.execute_command("python", vec!["-c", &code])?;
         
         // Parse the output as a Python value
-        self.python_to_value(&output.to_string())
+        if let Value::String(s) = output {
+            self.python_to_value(&s)
+        } else {
+            Err(RuntimeError::new(
+                &format!("Expected string output from Python, got: {:?}", output),
+                crate::utils::SourceLocation::new(0, 0, 0, 0, ""),
+            ))
+        }
     }
     
     /// Call a JavaScript function
@@ -118,7 +125,14 @@ impl Interop {
         let output = self.execute_command("node", vec!["-e", &code])?;
         
         // Parse the output as a JSON value
-        self.json_to_value(&output.to_string())
+        if let Value::String(s) = output {
+            self.json_to_value(&s)
+        } else {
+            Err(RuntimeError::new(
+                &format!("Expected string output from JavaScript, got: {:?}", output),
+                crate::utils::SourceLocation::new(0, 0, 0, 0, ""),
+            ))
+        }
     }
     
     /// Convert a value to Python code

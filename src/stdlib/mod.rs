@@ -12,7 +12,7 @@ use crate::utils::SourceLocation;
 /// The standard library for the LLM.lang language
 pub struct StdLib {
     /// The functions in the standard library
-    functions: HashMap<String, StdLibFunction>,
+    pub functions: HashMap<String, StdLibFunction>,
 }
 
 /// A standard library function
@@ -817,3 +817,12 @@ mod tests {
         assert_eq!(StdLib::value_to_string(&Value::List(vec![Value::Int(1), Value::Int(2)])), "[1, 2]");
         
         let mut map = HashMap::new();
+        map.insert("a".to_string(), Value::Int(1));
+        map.insert("b".to_string(), Value::Int(2));
+        assert_eq!(StdLib::value_to_string(&Value::Map(map)), "{a: 1, b: 2}");
+        
+        assert_eq!(StdLib::value_to_string(&Value::Function("test".to_string())), "<function test>");
+        assert_eq!(StdLib::value_to_string(&Value::Vector(vec![0.1, 0.2, 0.3])), "<vector with 3 dimensions>");
+        assert_eq!(StdLib::value_to_string(&Value::Context("TestContext".to_string())), "<context TestContext>");
+    }
+}

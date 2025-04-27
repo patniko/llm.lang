@@ -207,8 +207,8 @@ fn print_help() {
     println!("  exit, quit - Exit the interpreter");
     println!("  help       - Show this help message");
     println!("\nMultiline Input:");
-    println!("  Start a line with a '{' to begin multiline input");
-    println!("  Enter a single '}' on a line to end multiline input and execute it");
+    println!("  Start a line with a '{{' to begin multiline input");
+    println!("  Enter a single '}}' on a line to end multiline input and execute it");
     println!("\nExamples:");
     println!("  >>> print(\"Hello, World!\")");
     println!("  >>> var x = 42");

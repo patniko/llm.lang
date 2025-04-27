@@ -1,0 +1,5 @@
+context Test {
+    fn main() {
+        print("Test");
+    }
+}

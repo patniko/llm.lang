@@ -10,10 +10,10 @@ if ! command -v cargo &> /dev/null; then
 fi
 
 # Build the project if needed
-if [ ! -f "target/release/llmi" ] || [ ! -f "target/release/llmc" ]; then
-    echo "Building LLM.lang..."
-    cargo build --release
-fi
+#if [ ! -f "target/release/llmi" ] || [ ! -f "target/release/llmc" ]; then
+echo "Building LLM.lang..."
+cargo build --release
+#fi
 
 # Add the target/release directory to PATH temporarily
 export PATH="$PATH:$(pwd)/target/release"

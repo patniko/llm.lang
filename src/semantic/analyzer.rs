@@ -139,12 +139,57 @@ pub struct SemanticAnalyzer {
 impl SemanticAnalyzer {
     /// Create a new semantic analyzer
     pub fn new() -> Self {
-        Self {
+        let mut analyzer = Self {
             scope: Scope::new(),
             in_function: false,
             in_loop: false,
             current_return_type: None,
-        }
+        };
+        
+        // Register standard library functions
+        analyzer.register_stdlib_functions();
+        
+        analyzer
+    }
+    
+    /// Register standard library functions
+    fn register_stdlib_functions(&mut self) {
+        // Core functions
+        self.register_stdlib_function("print", vec![("value", "Any")], "Void");
+        self.register_stdlib_function("toString", vec![("value", "Any")], "String");
+        self.register_stdlib_function("parseInt", vec![("value", "String")], "Int");
+        self.register_stdlib_function("parseFloat", vec![("value", "String")], "Float");
+        
+        // Collection functions
+        self.register_stdlib_function("length", vec![("collection", "Any")], "Int");
+        self.register_stdlib_function("isEmpty", vec![("collection", "Any")], "Bool");
+        self.register_stdlib_function("contains", vec![("collection", "Any"), ("value", "Any")], "Bool");
+        
+        // String functions
+        self.register_stdlib_function("substring", vec![("string", "String"), ("start", "Int"), ("end", "Int")], "String");
+        self.register_stdlib_function("indexOf", vec![("string", "String"), ("substring", "String")], "Int");
+        self.register_stdlib_function("toLowerCase", vec![("string", "String")], "String");
+        self.register_stdlib_function("toUpperCase", vec![("string", "String")], "String");
+        self.register_stdlib_function("trim", vec![("string", "String")], "String");
+        
+        // Vector functions
+        self.register_stdlib_function("embed", vec![("text", "String")], "Vector");
+        self.register_stdlib_function("similarity", vec![("vector1", "Vector"), ("vector2", "Vector")], "Float");
+        
+        // Context functions
+        self.register_stdlib_function("currentContext", vec![], "Context");
+        self.register_stdlib_function("switchContext", vec![("name", "String")], "Context");
+    }
+    
+    /// Register a standard library function
+    fn register_stdlib_function(&mut self, name: &str, parameters: Vec<(&str, &str)>, return_type: &str) {
+        let function = Symbol::Function {
+            name: name.to_string(),
+            parameters: parameters.iter().map(|(n, t)| (n.to_string(), t.to_string())).collect(),
+            return_type: return_type.to_string(),
+        };
+        
+        self.scope.define(name, function);
     }
     
     /// Analyze an AST
@@ -214,8 +259,10 @@ impl SemanticAnalyzer {
             return Err(SemanticError::redefined_context(name, node.location.clone()));
         }
         
-        // Create a new scope for the context
-        let old_scope = std::mem::replace(&mut self.scope, Scope::with_parent(self.scope.clone()));
+        // Create a clone of the current scope
+        let current_scope_clone = self.scope.clone();
+        // Replace the current scope with a new one that has the clone as parent
+        let old_scope = std::mem::replace(&mut self.scope, Scope::with_parent(current_scope_clone));
         
         // Define the context
         let context = Symbol::Context {
@@ -279,8 +326,10 @@ impl SemanticAnalyzer {
         
         self.scope.define(name, function);
         
-        // Create a new scope for the function body
-        let old_scope = std::mem::replace(&mut self.scope, Scope::with_parent(self.scope.clone()));
+        // Create a clone of the current scope
+        let current_scope_clone = self.scope.clone();
+        // Replace the current scope with a new one that has the clone as parent
+        let old_scope = std::mem::replace(&mut self.scope, Scope::with_parent(current_scope_clone));
         
         // Define the parameters in the new scope
         for (param_name, param_type) in &parameters {
@@ -320,10 +369,14 @@ impl SemanticAnalyzer {
     
     /// Analyze a variable node
     fn analyze_variable(&mut self, node: &mut Node) -> SemanticResult<()> {
+        // First, extract all the information we need from the node
+        let location = node.location.clone();
+        
         // Get the variable name
-        let name = node.get_attribute("name").ok_or_else(|| {
-            SemanticError::missing_attribute("name", node.location.clone())
-        })?;
+        let name = match node.get_attribute("name") {
+            Some(name) => name.clone(),
+            None => return Err(SemanticError::missing_attribute("name", location)),
+        };
         
         // Get the variable type
         let typ = node.get_attribute("type").unwrap_or(&"Any".to_string()).clone();
@@ -332,13 +385,18 @@ impl SemanticAnalyzer {
         let mutable = node.get_attribute("mutable").map_or(false, |m| m == "true");
         
         // Check if the variable is already defined in this scope
-        if self.scope.contains(name) {
-            return Err(SemanticError::redefined_variable(name, node.location.clone()));
+        if self.scope.contains(&name) {
+            return Err(SemanticError::redefined_variable(&name, location));
         }
         
-        // Analyze the initializer
-        if let Some(initializer) = node.get_child_mut(0) {
-            self.analyze_node(initializer)?;
+        // Get the initializer if it exists
+        let has_initializer = node.child_count() > 0;
+        
+        // Analyze the initializer if it exists
+        if has_initializer {
+            if let Some(initializer) = node.get_child_mut(0) {
+                self.analyze_node(initializer)?;
+            }
         }
         
         // Define the variable
@@ -348,7 +406,7 @@ impl SemanticAnalyzer {
             mutable,
         };
         
-        self.scope.define(name, variable);
+        self.scope.define(&name, variable);
         
         Ok(())
     }
@@ -367,8 +425,10 @@ impl SemanticAnalyzer {
     
     /// Analyze a block node
     fn analyze_block(&mut self, node: &mut Node) -> SemanticResult<()> {
-        // Create a new scope for the block
-        let old_scope = std::mem::replace(&mut self.scope, Scope::with_parent(self.scope.clone()));
+        // Create a clone of the current scope
+        let current_scope_clone = self.scope.clone();
+        // Replace the current scope with a new one that has the clone as parent
+        let old_scope = std::mem::replace(&mut self.scope, Scope::with_parent(current_scope_clone));
         
         // Analyze all children
         for i in 0..node.child_count() {
@@ -449,20 +509,36 @@ impl SemanticAnalyzer {
     
     /// Analyze a for node
     fn analyze_for(&mut self, node: &mut Node) -> SemanticResult<()> {
+        // First, extract all the information we need from the node
+        let location = node.location.clone();
+        
         // Get the loop variable name
-        let variable = node.get_attribute("variable").ok_or_else(|| {
-            SemanticError::missing_attribute("variable", node.location.clone())
-        })?;
+        let variable = match node.get_attribute("variable") {
+            Some(variable) => variable.clone(),
+            None => return Err(SemanticError::missing_attribute("variable", location.clone())),
+        };
+        
+        // Check if the collection expression exists
+        let has_collection = node.child_count() > 0;
+        if !has_collection {
+            return Err(SemanticError::missing_child(0, location.clone()));
+        }
         
         // Analyze the collection expression
         if let Some(collection) = node.get_child_mut(0) {
             self.analyze_node(collection)?;
-        } else {
-            return Err(SemanticError::missing_child(0, node.location.clone()));
         }
         
-        // Create a new scope for the loop body
-        let old_scope = std::mem::replace(&mut self.scope, Scope::with_parent(self.scope.clone()));
+        // Check if the body exists
+        let has_body = node.child_count() > 1;
+        if !has_body {
+            return Err(SemanticError::missing_child(1, location.clone()));
+        }
+        
+        // Create a clone of the current scope
+        let current_scope_clone = self.scope.clone();
+        // Replace the current scope with a new one that has the clone as parent
+        let old_scope = std::mem::replace(&mut self.scope, Scope::with_parent(current_scope_clone));
         
         // Define the loop variable
         let loop_var = Symbol::Variable {
@@ -471,7 +547,7 @@ impl SemanticAnalyzer {
             mutable: false,
         };
         
-        self.scope.define(variable, loop_var);
+        self.scope.define(&variable, loop_var);
         
         // Set the in_loop flag
         let old_in_loop = self.in_loop;
@@ -480,8 +556,6 @@ impl SemanticAnalyzer {
         // Analyze the loop body
         if let Some(body) = node.get_child_mut(1) {
             self.analyze_node(body)?;
-        } else {
-            return Err(SemanticError::missing_child(1, node.location.clone()));
         }
         
         // Restore the old scope and in_loop flag
@@ -745,6 +819,10 @@ impl SemanticAnalyzer {
     
     /// Analyze a call node
     fn analyze_call(&mut self, node: &mut Node) -> SemanticResult<()> {
+        // Store the node's location and child count before any mutable operations
+        let location = node.location.clone();
+        let child_count = node.child_count();
+        
         // Analyze the callee
         if let Some(callee) = node.get_child_mut(0) {
             self.analyze_node(callee)?;
@@ -756,30 +834,35 @@ impl SemanticAnalyzer {
                     SemanticError::missing_attribute("name", callee.location.clone())
                 })?;
                 
+                let callee_location = callee.location.clone();
+                
                 // Check if the function is defined
                 if let Some(symbol) = self.scope.get(name) {
-                    if let Symbol::Function { parameters, .. } = symbol {
-                        // Check if the argument count matches
-                        let expected = parameters.len();
-                        let actual = node.child_count() - 1;
-                        
-                        if expected != actual {
-                            return Err(SemanticError::invalid_argument_count(
-                                name,
-                                expected,
-                                actual,
-                                node.location.clone(),
-                            ));
+                    match symbol {
+                        Symbol::Function { parameters, .. } => {
+                            // Check if the argument count matches
+                            let expected = parameters.len();
+                            let actual = child_count - 1;
+                            
+                            if expected != actual {
+                                return Err(SemanticError::invalid_argument_count(
+                                    name,
+                                    expected,
+                                    actual,
+                                    location,
+                                ));
+                            }
+                        },
+                        _ => {
+                            return Err(SemanticError::undefined_function(name, callee_location));
                         }
-                    } else {
-                        return Err(SemanticError::undefined_function(name, callee.location.clone()));
                     }
                 } else {
-                    return Err(SemanticError::undefined_function(name, callee.location.clone()));
+                    return Err(SemanticError::undefined_function(name, callee_location));
                 }
             }
         } else {
-            return Err(SemanticError::missing_child(0, node.location.clone()));
+            return Err(SemanticError::missing_child(0, location));
         }
         
         // Analyze all arguments
@@ -861,3 +944,14 @@ mod tests {
         let symbol = Symbol::Variable {
             name: "x".to_string(),
             typ: "Int".to_string(),
+            mutable: false,
+        };
+        
+        assert!(scope.define("x", symbol));
+        assert!(!scope.define("x", Symbol::Variable {
+            name: "x".to_string(),
+            typ: "Int".to_string(),
+            mutable: false,
+        }));
+    }
+}

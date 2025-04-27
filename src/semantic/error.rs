@@ -161,6 +161,16 @@ impl SemanticError {
     pub fn invalid_semantic_token(token: &str, location: SourceLocation) -> Self {
         Self::new(&format!("Invalid semantic token: '{}'", token), location)
     }
+    
+    /// Create a new "missing attribute" error
+    pub fn missing_attribute(attribute: &str, location: SourceLocation) -> Self {
+        Self::new(&format!("Missing attribute: '{}'", attribute), location)
+    }
+    
+    /// Create a new "missing child" error
+    pub fn missing_child(index: usize, location: SourceLocation) -> Self {
+        Self::new(&format!("Missing child at index {}", index), location)
+    }
 }
 
 impl std::error::Error for SemanticError {}
