@@ -51,7 +51,7 @@ impl NLP {
             let key_terms = self.extract_key_terms(text);
             
             // Simulate database search based on key terms
-            if key_terms.contains(&"user") || key_terms.contains(&"users") {
+            if key_terms.iter().any(|term| term == "user") || key_terms.iter().any(|term| term == "users") {
                 // Add some mock user data
                 let mut user1 = std::collections::HashMap::new();
                 user1.insert("name".to_string(), Value::String("Alice Smith".to_string()));
@@ -72,10 +72,10 @@ impl NLP {
                 user3.insert("accountType".to_string(), Value::String("basic".to_string()));
                 
                 // Filter based on other key terms
-                if key_terms.contains(&"premium") {
+                if key_terms.iter().any(|term| term == "premium") {
                     result.push(Value::Map(user1));
                     result.push(Value::Map(user2));
-                } else if key_terms.contains(&"basic") {
+                } else if key_terms.iter().any(|term| term == "basic") {
                     result.push(Value::Map(user3));
                 } else if text.contains("logged in") && text.contains("last week") {
                     // Users who logged in during the last week
@@ -87,7 +87,7 @@ impl NLP {
                     result.push(Value::Map(user2));
                     result.push(Value::Map(user3));
                 }
-            } else if key_terms.contains(&"product") || key_terms.contains(&"products") {
+            } else if key_terms.iter().any(|term| term == "product") || key_terms.iter().any(|term| term == "products") {
                 // Add some mock product data
                 let mut product1 = std::collections::HashMap::new();
                 product1.insert("name".to_string(), Value::String("Smartphone".to_string()));
@@ -140,7 +140,7 @@ impl NLP {
     }
     
     /// Extract key terms from text
-    fn extract_key_terms(&self, text: &str) -> Vec<&str> {
+    fn extract_key_terms(&self, text: &str) -> Vec<String> {
         // Convert to lowercase
         let text = text.to_lowercase();
         
@@ -161,6 +161,7 @@ impl NLP {
         
         words.into_iter()
             .filter(|word| !stop_words.contains(word))
+            .map(|word| word.to_string())
             .collect()
     }
     
@@ -380,7 +381,7 @@ impl NLP {
                 
                 // Extract the date value (simplified)
                 let words: Vec<&str> = text.split_whitespace().collect();
-                for word in words {
+                for word in &words {
                     if word.contains("-") || word.contains("/") {
                         date.insert("value".to_string(), Value::String(word.to_string()));
                         break;
@@ -589,7 +590,7 @@ impl NLP {
         
         // Count word frequencies
         for sentence in &sentences {
-            let words: Vec<&str> = sentence.split_whitespace()
+            let words: Vec<String> = sentence.split_whitespace()
                 .map(|w| w.to_lowercase())
                 .collect();
             
@@ -602,20 +603,21 @@ impl NLP {
         let mut sentence_scores: Vec<(usize, f64)> = Vec::new();
         
         for (i, sentence) in sentences.iter().enumerate() {
-            let words: Vec<&str> = sentence.split_whitespace()
+            let words: Vec<String> = sentence.split_whitespace()
                 .map(|w| w.to_lowercase())
                 .collect();
             
             let mut score = 0.0;
+            let words_len = words.len();
             
-            for word in words {
+            for word in &words {
                 if let Some(freq) = word_freq.get(word) {
                     score += *freq as f64;
                 }
             }
             
             // Normalize by sentence length
-            if !words.is_empty() {
+            if words_len > 0 {
                 score /= words.len() as f64;
             }
             
@@ -814,3 +816,4 @@ impl NLP {
             Ok(Value::String("I couldn't find a relevant answer in the provided context.".to_string()))
         }
     }
+}

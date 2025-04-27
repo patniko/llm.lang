@@ -324,6 +324,7 @@ impl From<ExecuteOptions> for runtime::engine::EngineOptions {
             parallel: options.parallel,
             vectors: options.vectors,
             nlp: options.nlp,
+            self_modifying: true,
         }
     }
 }

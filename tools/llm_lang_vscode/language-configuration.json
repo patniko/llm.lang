@@ -1,0 +1,41 @@
+{
+    "comments": {
+        "lineComment": "//",
+        "blockComment": ["/*", "*/"]
+    },
+    "brackets": [
+        ["{", "}"],
+        ["[", "]"],
+        ["(", ")"]
+    ],
+    "autoClosingPairs": [
+        { "open": "{", "close": "}" },
+        { "open": "[", "close": "]" },
+        { "open": "(", "close": ")" },
+        { "open": "\"", "close": "\"", "notIn": ["string"] },
+        { "open": "'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "#\"", "close": "\"#", "notIn": ["string", "comment"] }
+    ],
+    "surroundingPairs": [
+        ["{", "}"],
+        ["[", "]"],
+        ["(", ")"],
+        ["\"", "\""],
+        ["'", "'"],
+        ["#\"", "\"#"]
+    ],
+    "indentationRules": {
+        "increaseIndentPattern": "^.*\\{[^}\"']*$|^.*\\([^\\)\"']*$|^\\s*\\bfn\\b.*$|^\\s*\\bcontext\\b.*$|^\\s*\\bif\\b.*$|^\\s*\\belse\\b.*$|^\\s*\\bwhen\\b.*$|^\\s*\\bfor\\b.*$|^\\s*\\bparallel\\b.*$",
+        "decreaseIndentPattern": "^\\s*}|^\\s*\\)|^\\s*\\belse\\b|^\\s*\\botherwise\\b"
+    },
+    "wordPattern": "(-?\\d*\\.\\d\\w*)|([^\\`\\~\\!\\@\\#\\%\\^\\&\\*\\(\\)\\-\\=\\+\\[\\{\\]\\}\\\\\\|\\;\\:\\'\\\"\\,\\.\\<\\>\\/\\?\\s]+)",
+    "onEnterRules": [
+        {
+            "beforeText": "^\\s*//.*$",
+            "action": {
+                "indent": "none",
+                "appendText": "// "
+            }
+        }
+    ]
+}

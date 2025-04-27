@@ -217,7 +217,7 @@ impl Modify {
                             RuntimeError::missing_attribute("name", child.location.clone())
                         })?;
                         
-                        let param_type = child.get_attribute("type").unwrap_or(&"Any".to_string());
+                        let param_type = child.get_attribute("type").map_or("Any", |v| v).to_string();
                         
                         source.push_str(&format!("{}: {}", param_name, param_type));
                         
@@ -444,7 +444,7 @@ impl Modify {
                 }
                 
                 // Add selection strategy
-                let strategy = node.get_attribute("strategy").unwrap_or(&"all".to_string());
+                let strategy = node.get_attribute("strategy").map_or("all", |v| v).to_string();
                 source.push_str(&format!("{}}} select {};\n", indent_str, strategy));
             }
             NodeKind::Apply => {
@@ -856,4 +856,14 @@ mod tests {
         
         let new_node = Node {
             kind: NodeKind::Function,
-            location: location.
+            location: location.clone(),
+            children: Vec::new(),
+            attributes: std::collections::HashMap::new(),
+        };
+        
+        let result = modify.replace_node(&mut ast, &[0], &new_node);
+        
+        assert!(result.is_ok());
+        assert_eq!(ast.root().children[0].kind, NodeKind::Function);
+    }
+}

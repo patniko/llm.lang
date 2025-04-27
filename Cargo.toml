@@ -85,6 +85,7 @@ members = [
     ".",
     "tools/llm_lang_lsp",
     "tools/llm_lang_fmt",
+    "tools/llm_lang_dap",
 ]
 
 [package.metadata.docs.rs]
