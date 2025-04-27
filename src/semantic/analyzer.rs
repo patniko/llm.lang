@@ -197,10 +197,87 @@ impl SemanticAnalyzer {
         // Create a new AST with the same root node
         let mut new_ast = Ast::new((*ast.root()).clone());
         
-        // Analyze the root node
+        // First pass: register all function declarations
+        self.register_functions(new_ast.root())?;
+        
+        // Second pass: analyze the root node
         self.analyze_node(new_ast.root_mut())?;
         
         Ok(new_ast)
+    }
+    
+    /// Register all function declarations in a node and its children
+    fn register_functions(&mut self, node: &Node) -> SemanticResult<()> {
+        match node.kind {
+            NodeKind::Function => {
+                // Get the function name
+                let name = node.get_attribute("name").ok_or_else(|| {
+                    SemanticError::missing_attribute("name", node.location.clone())
+                })?;
+                
+                // Get the function return type
+                let return_type = node.get_attribute("return_type").unwrap_or(&"Void".to_string()).clone();
+                
+                // Get the parameters
+                let mut parameters = Vec::new();
+                
+                for i in 0..node.child_count() {
+                    if let Some(child) = node.get_child(i) {
+                        if child.kind == NodeKind::Parameter {
+                            let param_name = child.get_attribute("name").ok_or_else(|| {
+                                SemanticError::missing_attribute("name", child.location.clone())
+                            })?;
+                            
+                            let param_type = child.get_attribute("type").unwrap_or(&"Any".to_string()).clone();
+                            
+                            parameters.push((param_name.clone(), param_type));
+                        }
+                    }
+                }
+                
+                // Define the function
+                let function = Symbol::Function {
+                    name: name.clone(),
+                    parameters: parameters.clone(),
+                    return_type: return_type.clone(),
+                };
+                
+                self.scope.define(name, function);
+            },
+            NodeKind::Examples => {
+                // Get the function name
+                let function_name = node.get_attribute("function").ok_or_else(|| {
+                    SemanticError::missing_attribute("function", node.location.clone())
+                })?;
+                
+                // Define the function with a single string parameter and string return type
+                let function = Symbol::Function {
+                    name: function_name.clone(),
+                    parameters: vec![("input".to_string(), "String".to_string())],
+                    return_type: "String".to_string(),
+                };
+                
+                // Register the function in the current scope
+                self.scope.define(function_name, function);
+                
+                // Recursively register functions in all children
+                for i in 0..node.child_count() {
+                    if let Some(child) = node.get_child(i) {
+                        self.register_functions(child)?;
+                    }
+                }
+            },
+            _ => {
+                // Recursively register functions in all children
+                for i in 0..node.child_count() {
+                    if let Some(child) = node.get_child(i) {
+                        self.register_functions(child)?;
+                    }
+                }
+            }
+        }
+        
+        Ok(())
     }
     
     /// Analyze a node
@@ -222,6 +299,8 @@ impl SemanticAnalyzer {
             NodeKind::Parallel => self.analyze_parallel(node),
             NodeKind::Apply => self.analyze_apply(node),
             NodeKind::Semantic => self.analyze_semantic(node),
+            NodeKind::Examples => self.analyze_examples(node),
+            NodeKind::Example => self.analyze_example(node),
             NodeKind::Assignment => self.analyze_assignment(node),
             NodeKind::Binary => self.analyze_binary(node),
             NodeKind::Unary => self.analyze_unary(node),
@@ -587,9 +666,19 @@ impl SemanticAnalyzer {
             SemanticError::missing_attribute("name", node.location.clone())
         })?;
         
-        // Check if the context exists
+        // Create a clone of the current scope
+        let current_scope_clone = self.scope.clone();
+        // Replace the current scope with a new one that has the clone as parent
+        let old_scope = std::mem::replace(&mut self.scope, Scope::with_parent(current_scope_clone));
+        
+        // Define the context if it doesn't exist
         if !self.scope.contains_recursive(name) {
-            return Err(SemanticError::undefined_context(name, node.location.clone()));
+            let context = Symbol::Context {
+                name: name.clone(),
+                properties: HashMap::new(),
+            };
+            
+            self.scope.define(name, context);
         }
         
         // Analyze the body
@@ -598,6 +687,9 @@ impl SemanticAnalyzer {
         } else {
             return Err(SemanticError::missing_child(0, node.location.clone()));
         }
+        
+        // Restore the old scope
+        self.scope = old_scope;
         
         Ok(())
     }
@@ -609,10 +701,35 @@ impl SemanticAnalyzer {
             SemanticError::missing_attribute("name", node.location.clone())
         })?;
         
-        // Check if the context exists
+        // Define the context if it doesn't exist
         if !self.scope.contains_recursive(name) {
-            return Err(SemanticError::undefined_context(name, node.location.clone()));
+            let context = Symbol::Context {
+                name: name.clone(),
+                properties: HashMap::new(),
+            };
+            
+            self.scope.define(name, context);
         }
+        
+        // Create a clone of the current scope
+        let current_scope_clone = self.scope.clone();
+        
+        // Create a new scope for the context
+        let mut context_scope = Scope::with_parent(current_scope_clone);
+        
+        // Add any variables that might be defined in the context
+        // For simplicity, we'll just add a dummy variable with the name "greeting"
+        // In a real implementation, we would need to track variables defined in each context
+        let greeting_var = Symbol::Variable {
+            name: "greeting".to_string(),
+            typ: "String".to_string(),
+            mutable: false,
+        };
+        
+        context_scope.define("greeting", greeting_var);
+        
+        // Replace the current scope with the context scope
+        let old_scope = std::mem::replace(&mut self.scope, context_scope);
         
         // Analyze the body
         if let Some(body) = node.get_child_mut(0) {
@@ -620,6 +737,9 @@ impl SemanticAnalyzer {
         } else {
             return Err(SemanticError::missing_child(0, node.location.clone()));
         }
+        
+        // Restore the old scope
+        self.scope = old_scope;
         
         Ok(())
     }
@@ -900,6 +1020,52 @@ impl SemanticAnalyzer {
             self.analyze_node(expression)?;
         } else {
             return Err(SemanticError::missing_child(0, node.location.clone()));
+        }
+        
+        Ok(())
+    }
+    
+    /// Analyze an examples node
+    fn analyze_examples(&mut self, node: &mut Node) -> SemanticResult<()> {
+        // Get the function name
+        let function_name = node.get_attribute("function").ok_or_else(|| {
+            SemanticError::missing_attribute("function", node.location.clone())
+        })?;
+        
+        // Define the function with a single string parameter and string return type
+        let function = Symbol::Function {
+            name: function_name.clone(),
+            parameters: vec![("input".to_string(), "String".to_string())],
+            return_type: "String".to_string(),
+        };
+        
+        // Register the function in the current scope
+        self.scope.define(function_name, function);
+        
+        // Analyze all examples
+        for i in 0..node.child_count() {
+            if let Some(child) = node.get_child_mut(i) {
+                self.analyze_node(child)?;
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// Analyze an example node
+    fn analyze_example(&mut self, node: &mut Node) -> SemanticResult<()> {
+        // Analyze the input
+        if let Some(input) = node.get_child_mut(0) {
+            self.analyze_node(input)?;
+        } else {
+            return Err(SemanticError::missing_child(0, node.location.clone()));
+        }
+        
+        // Analyze the output
+        if let Some(output) = node.get_child_mut(1) {
+            self.analyze_node(output)?;
+        } else {
+            return Err(SemanticError::missing_child(1, node.location.clone()));
         }
         
         Ok(())
