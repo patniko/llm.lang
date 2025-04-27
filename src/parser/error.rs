@@ -104,11 +104,10 @@ impl fmt::Display for ParserError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Parser error: {} at {}:{}:{}",
+            "Parser error: {} at {}:{}",
             self.message,
             self.location.file,
-            self.location.start_line,
-            self.location.start_column
+            self.location.start_line
         )
     }
 }

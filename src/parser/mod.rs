@@ -275,7 +275,9 @@ impl Parser {
     
     /// Parse a statement
     fn parse_statement(&mut self) -> ParserResult<Node> {
-        if self.match_keyword("var") {
+        if self.match_keyword("var") || self.match_keyword("Int") || self.match_keyword("Float") || 
+           self.match_keyword("String") || self.match_keyword("Bool") || self.match_keyword("List") || 
+           self.match_keyword("Map") || self.match_keyword("Vector") || self.match_keyword("Context") {
             // Parse a variable declaration
             self.parse_variable_declaration()
         } else if self.match_keyword("if") {
@@ -350,15 +352,35 @@ impl Parser {
     
     /// Parse a variable declaration
     fn parse_variable_declaration(&mut self) -> ParserResult<Node> {
-        // We've already consumed the "var" keyword
+        // We've already consumed either the "var" keyword or a type keyword
+        
+        // Get the type if we've consumed a type keyword
+        let mut typ = None;
+        let token = self.previous().unwrap();
+        
+        if token.kind == TokenKind::Keyword && token.value != "var" {
+            // We've consumed a type keyword, so set the type
+            typ = Some(match token.value.as_str() {
+                "Int" => Type::Int,
+                "Float" => Type::Float,
+                "String" => Type::String,
+                "Bool" => Type::Bool,
+                "List" => Type::List,
+                "Map" => Type::Map,
+                "Vector" => Type::Vector,
+                "Context" => Type::Context,
+                _ => return Err(ParserError::new(
+                    &format!("Unknown type: {}", token.value),
+                    token.location.clone(),
+                )),
+            });
+        }
         
         // Parse the variable name
         let name = self.consume_identifier("Expected variable name")?;
         
-        // Parse the variable type (if any)
-        let mut typ = None;
-        
-        if self.match_delimiter(":") {
+        // Parse the variable type (if we haven't already got it)
+        if typ.is_none() && self.match_delimiter(":") {
             typ = Some(self.parse_type()?);
         }
         
@@ -1506,8 +1528,16 @@ impl Parser {
         if self.check_token(TokenKind::Identifier) {
             Ok(self.advance().unwrap().clone())
         } else {
-            let token = self.peek().unwrap();
-            Err(ParserError::new(error_message, token.location.clone()))
+            // Use the location of the previous token for more accurate error reporting
+            let location = if let Some(prev) = self.previous() {
+                prev.location.clone()
+            } else if let Some(curr) = self.peek() {
+                curr.location.clone()
+            } else {
+                SourceLocation::new(0, 0, 0, 0, "")
+            };
+            
+            Err(ParserError::new(error_message, location))
         }
     }
     
@@ -1516,8 +1546,16 @@ impl Parser {
         if self.check_keyword(value) {
             Ok(self.advance().unwrap().clone())
         } else {
-            let token = self.peek().unwrap();
-            Err(ParserError::new(error_message, token.location.clone()))
+            // Use the location of the previous token for more accurate error reporting
+            let location = if let Some(prev) = self.previous() {
+                prev.location.clone()
+            } else if let Some(curr) = self.peek() {
+                curr.location.clone()
+            } else {
+                SourceLocation::new(0, 0, 0, 0, "")
+            };
+            
+            Err(ParserError::new(error_message, location))
         }
     }
     
@@ -1526,8 +1564,16 @@ impl Parser {
         if self.check_delimiter(value) {
             Ok(self.advance().unwrap().clone())
         } else {
-            let token = self.peek().unwrap();
-            Err(ParserError::new(error_message, token.location.clone()))
+            // Use the location of the previous token for more accurate error reporting
+            let location = if let Some(prev) = self.previous() {
+                prev.location.clone()
+            } else if let Some(curr) = self.peek() {
+                curr.location.clone()
+            } else {
+                SourceLocation::new(0, 0, 0, 0, "")
+            };
+            
+            Err(ParserError::new(error_message, location))
         }
     }
     
@@ -1536,8 +1582,16 @@ impl Parser {
         if self.check_operator(value) {
             Ok(self.advance().unwrap().clone())
         } else {
-            let token = self.peek().unwrap();
-            Err(ParserError::new(error_message, token.location.clone()))
+            // Use the location of the previous token for more accurate error reporting
+            let location = if let Some(prev) = self.previous() {
+                prev.location.clone()
+            } else if let Some(curr) = self.peek() {
+                curr.location.clone()
+            } else {
+                SourceLocation::new(0, 0, 0, 0, "")
+            };
+            
+            Err(ParserError::new(error_message, location))
         }
     }
     
@@ -1546,8 +1600,16 @@ impl Parser {
         if self.check_token(TokenKind::StringLiteral) {
             Ok(self.advance().unwrap().clone())
         } else {
-            let token = self.peek().unwrap();
-            Err(ParserError::new(error_message, token.location.clone()))
+            // Use the location of the previous token for more accurate error reporting
+            let location = if let Some(prev) = self.previous() {
+                prev.location.clone()
+            } else if let Some(curr) = self.peek() {
+                curr.location.clone()
+            } else {
+                SourceLocation::new(0, 0, 0, 0, "")
+            };
+            
+            Err(ParserError::new(error_message, location))
         }
     }
     
@@ -1583,6 +1645,24 @@ impl Parser {
         if let Some(token) = self.peek() {
             token.location.clone()
         } else if let Some(token) = self.previous() {
+            token.location.clone()
+        } else {
+            SourceLocation::new(0, 0, 0, 0, "")
+        }
+    }
+    
+    /// Get the location of the previous token
+    fn previous_location(&self) -> SourceLocation {
+        if let Some(token) = self.previous() {
+            // Create a location that points to the end of the previous token
+            SourceLocation::new(
+                token.location.end_line,
+                token.location.end_column,
+                token.location.end_line,
+                token.location.end_column,
+                &token.location.file,
+            )
+        } else if let Some(token) = self.peek() {
             token.location.clone()
         } else {
             SourceLocation::new(0, 0, 0, 0, "")

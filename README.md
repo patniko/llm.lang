@@ -216,10 +216,6 @@ Key advantages include:
 5. **Parallel Reasoning**: Express multiple solution approaches simultaneously
 6. **Concept Manipulation**: Work with semantic embeddings and thought vectors
 
-## Contributing
-
-We welcome contributions to LLM.lang! See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for details on how to get started.
-
 ## License
 
 LLM.lang is licensed under the MIT License. See [LICENSE](LICENSE) for details.
@@ -235,7 +231,3 @@ LLM.lang draws inspiration from many programming languages and paradigms, includ
 - Lisp's metaprogramming
 - Natural language processing techniques
 - Vector-based semantic representations
-
-## Contact
-
-For questions, suggestions, or discussions about LLM.lang, please open an issue on GitHub or join our community Discord server.

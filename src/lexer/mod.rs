@@ -117,6 +117,12 @@ impl Lexer {
         
         // Get the token based on the current character
         let token = match c {
+            // Whitespace (should be handled by skip_whitespace, but just in case)
+            c if self.is_whitespace(c) => {
+                self.skip_whitespace();
+                return self.next_token();
+            }
+            
             // Comments
             '/' if self.peek_next() == Some('/') => {
                 self.skip_line_comment();
@@ -153,8 +159,32 @@ impl Lexer {
             
             // Unknown character
             _ => {
+                // Get surrounding context (up to 10 chars before and after)
+                let position = self.position;
+                let start = if position > 10 { position - 10 } else { 0 };
+                let end = std::cmp::min(position + 10, self.source.len());
+                let context = &self.source[start..end];
+                
+                // Determine if it's a control or whitespace character
+                let char_type = if c.is_control() {
+                    "control character"
+                } else if c.is_whitespace() {
+                    "whitespace character"
+                } else {
+                    "character"
+                };
+                
                 return Err(LexerError {
-                    message: format!("Unexpected character: {}", c),
+                    message: format!(
+                        "Unexpected {}: '{}' (U+{:04X}, hex: {:02X}) at position {}:{}\nContext: \"{}\"", 
+                        char_type, 
+                        c, 
+                        c as u32, 
+                        c as u32,
+                        self.line,
+                        self.column,
+                        context
+                    ),
                     location: self.current_location(),
                 });
             }
@@ -183,6 +213,12 @@ impl Lexer {
         }
     }
     
+    /// Check if a character is a whitespace character
+    fn is_whitespace(&self, c: char) -> bool {
+        // Consider all standard whitespace plus newlines
+        c.is_whitespace()
+    }
+    
     /// Skip a line comment
     fn skip_line_comment(&mut self) {
         // Consume the '//'
@@ -192,6 +228,8 @@ impl Lexer {
         // Skip until the end of the line
         while let Some(c) = self.peek() {
             if c == '\n' {
+                // Consume the newline character too
+                self.next();
                 break;
             }
             
@@ -265,7 +303,8 @@ impl Lexer {
         let kind = match identifier {
             "context" | "fn" | "var" | "if" | "else" | "when" | "otherwise" | "parallel" | "select" |
             "return" | "with" | "within" | "intent" | "examples" | "transform" | "into" | "apply" |
-            "for" | "in" | "true" | "false" | "null" | "and" | "or" | "not" | "vector" => TokenKind::Keyword,
+            "for" | "in" | "true" | "false" | "null" | "and" | "or" | "not" | "vector" |
+            "Int" | "Float" | "String" | "Bool" | "List" | "Map" | "Vector" | "Context" => TokenKind::Keyword,
             _ => TokenKind::Identifier,
         };
         
@@ -367,15 +406,13 @@ impl Lexer {
                 if self.peek().is_none() {
                     break;
                 }
+                
+                // Consume the escaped character
+                self.next();
+                continue;
             }
             
-            if c == '\n' {
-                self.line += 1;
-                self.column = 1;
-            } else {
-                self.column += 1;
-            }
-            
+            // Consume the character
             self.next();
         }
         
@@ -417,13 +454,7 @@ impl Lexer {
                 break;
             }
             
-            if c == '\n' {
-                self.line += 1;
-                self.column = 1;
-            } else {
-                self.column += 1;
-            }
-            
+            // Consume the character
             self.next();
         }
         
@@ -500,13 +531,7 @@ impl Lexer {
                 break;
             }
             
-            if c == '\n' {
-                self.line += 1;
-                self.column = 1;
-            } else {
-                self.column += 1;
-            }
-            
+            // Consume the character
             self.next();
         }
         
@@ -671,8 +696,10 @@ impl Lexer {
     fn next(&mut self) -> Option<char> {
         let c = self.chars.next()?;
         
+        // Update the position based on the character's UTF-8 encoding
         self.position += c.len_utf8();
         
+        // Update the line and column numbers
         if c == '\n' {
             self.line += 1;
             self.column = 1;
@@ -893,5 +920,34 @@ mod tests {
         assert_eq!(tokens[10].kind, TokenKind::StringLiteral); // "Hello, World!"
         assert_eq!(tokens[11].kind, TokenKind::Delimiter); // )
         assert_eq!(tokens[12].kind, TokenKind::Eof);
+    }
+    
+    #[test]
+    fn test_tokenize_with_empty_lines() {
+        // Test with a comment followed by an empty line
+        let source = "// This is a comment\n\ncontext MainProgram {}";
+        
+        let mut lexer = Lexer::new(source);
+        let tokens = lexer.tokenize().unwrap();
+        
+        // Check that we have the expected number of tokens
+        assert_eq!(tokens.len(), 4);
+        assert_eq!(tokens[0].kind, TokenKind::Keyword); // context
+        assert_eq!(tokens[1].kind, TokenKind::Identifier); // MainProgram
+        assert_eq!(tokens[2].kind, TokenKind::Delimiter); // {
+        assert_eq!(tokens[3].kind, TokenKind::Eof);
+        
+        // Test with multiple consecutive empty lines
+        let source = "\n\n\ncontext MainProgram {}";
+        
+        let mut lexer = Lexer::new(source);
+        let tokens = lexer.tokenize().unwrap();
+        
+        // Check that we have the expected number of tokens
+        assert_eq!(tokens.len(), 4);
+        assert_eq!(tokens[0].kind, TokenKind::Keyword); // context
+        assert_eq!(tokens[1].kind, TokenKind::Identifier); // MainProgram
+        assert_eq!(tokens[2].kind, TokenKind::Delimiter); // {
+        assert_eq!(tokens[3].kind, TokenKind::Eof);
     }
 }
