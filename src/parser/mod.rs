@@ -769,10 +769,45 @@ impl Parser {
         // Add the strategy attribute
         parallel_statement.attributes.insert("strategy".to_string(), strategy.to_string());
         
-        // Consume the semicolon
-        self.consume_delimiter(";", "Expected ';' after selection strategy")?;
+        // Check if we're in a variable declaration context
+        // If we are, we don't consume the semicolon here, as it will be consumed by the variable declaration parser
+        // If we're not, we consume the semicolon
+        if !self.is_in_variable_declaration() {
+            self.consume_delimiter(";", "Expected ';' after selection strategy")?;
+        }
         
         Ok(parallel_statement)
+    }
+    
+    /// Check if we're in a variable declaration context
+    fn is_in_variable_declaration(&self) -> bool {
+        // Look back through the tokens to see if we're in a variable declaration
+        // This is a heuristic and might not be 100% accurate
+        let mut pos = self.position;
+        let mut brace_count = 0;
+        
+        while pos > 0 {
+            pos -= 1;
+            let token = &self.tokens[pos];
+            
+            if token.kind == TokenKind::Delimiter && token.value == "}" {
+                brace_count += 1;
+            } else if token.kind == TokenKind::Delimiter && token.value == "{" {
+                brace_count -= 1;
+            }
+            
+            // If we find a "var" keyword and we're not inside any braces, we're in a variable declaration
+            if brace_count == 0 && token.kind == TokenKind::Keyword && token.value == "var" {
+                return true;
+            }
+            
+            // If we find a semicolon, we're not in a variable declaration
+            if brace_count == 0 && token.kind == TokenKind::Delimiter && token.value == ";" {
+                return false;
+            }
+        }
+        
+        false
     }
     
     /// Parse a parallel path
@@ -1375,7 +1410,10 @@ impl Parser {
     
     /// Parse a primary expression
     fn parse_primary(&mut self) -> ParserResult<Node> {
-        if self.match_keyword("true") || self.match_keyword("false") {
+        if self.match_keyword("parallel") {
+            // Parse a parallel expression
+            self.parse_parallel_statement()
+        } else if self.match_keyword("true") || self.match_keyword("false") {
             // Parse a boolean literal
             let token = self.previous().unwrap();
             let value = token.value == "true";

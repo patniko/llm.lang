@@ -304,7 +304,8 @@ impl Lexer {
             "context" | "fn" | "var" | "if" | "else" | "when" | "otherwise" | "parallel" | "select" |
             "return" | "with" | "within" | "intent" | "examples" | "transform" | "into" | "apply" |
             "for" | "in" | "true" | "false" | "null" | "and" | "or" | "not" | "vector" |
-            "Int" | "Float" | "String" | "Bool" | "List" | "Map" | "Vector" | "Context" => TokenKind::Keyword,
+            "Int" | "Float" | "String" | "Bool" | "List" | "Map" | "Vector" | "Context" |
+            "fastest" | "best" | "all" | "path" => TokenKind::Keyword,
             _ => TokenKind::Identifier,
         };
         
