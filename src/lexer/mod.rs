@@ -303,7 +303,7 @@ impl Lexer {
         let kind = match identifier {
             "context" | "fn" | "var" | "if" | "else" | "when" | "otherwise" | "parallel" | "select" |
             "return" | "with" | "within" | "intent" | "examples" | "transform" | "into" | "apply" |
-            "for" | "in" | "true" | "false" | "null" | "and" | "or" | "not" | "vector" |
+            "for" | "in" | "true" | "false" | "null" | "and" | "or" | "not" | "vector" | "to" |
             "Int" | "Float" | "String" | "Bool" | "List" | "Map" | "Vector" | "Context" |
             "fastest" | "best" | "all" | "path" => TokenKind::Keyword,
             _ => TokenKind::Identifier,

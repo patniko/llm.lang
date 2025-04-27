@@ -275,7 +275,7 @@ impl Parser {
     
     /// Parse a statement
     fn parse_statement(&mut self) -> ParserResult<Node> {
-        if self.match_keyword("var") || self.match_keyword("Int") || self.match_keyword("Float") || 
+        if self.match_keyword("var") || self.match_keyword("vector") || self.match_keyword("Int") || self.match_keyword("Float") || 
            self.match_keyword("String") || self.match_keyword("Bool") || self.match_keyword("List") || 
            self.match_keyword("Map") || self.match_keyword("Vector") || self.match_keyword("Context") ||
            self.match_token(TokenKind::SemanticType) {
@@ -362,7 +362,7 @@ impl Parser {
         let mut typ = None;
         let token = self.previous().unwrap();
         
-        if token.kind == TokenKind::Keyword && token.value != "var" {
+        if token.kind == TokenKind::Keyword && token.value != "var" && token.value != "vector" {
             // We've consumed a type keyword, so set the type
             typ = Some(match token.value.as_str() {
                 "Int" => Type::Int,
