@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "llm-lang",
+            "request": "launch",
+            "name": "Debug LLM.lang Program",
+            "program": "${file}",
+            "stopOnEntry": true
+        }
+    ]
+}

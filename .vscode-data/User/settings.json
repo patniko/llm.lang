@@ -1,0 +1,4 @@
+{
+    "llm-lang.dapPath": "/Users/patrick/projects/llm.lang/target/release/llm_lang_dap",
+    "llm-lang.lspPath": "/Users/patrick/projects/llm.lang/target/release/llm_lang_lsp"
+}

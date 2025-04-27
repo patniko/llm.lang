@@ -1,0 +1,32 @@
+// A simple LLM.lang program to test the debugger
+
+context MainProgram {
+    fn main() {
+        // Define some variables
+        var x = 42;
+        var y = "Hello, World!";
+        
+        // Print the variables
+        print(x);
+        print(y);
+        
+        // Do some calculations
+        var z = x * 2;
+        print(z);
+        
+        // Use a conditional
+        if (x > 40) {
+            print("x is greater than 40");
+        } else {
+            print("x is less than or equal to 40");
+        }
+        
+        // Use a loop
+        for (i in [1, 2, 3, 4, 5]) {
+            print("Loop iteration: " + i);
+        }
+        
+        // Return a value
+        return "Debug test completed successfully!";
+    }
+}

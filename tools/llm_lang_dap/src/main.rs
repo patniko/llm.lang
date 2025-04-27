@@ -34,20 +34,20 @@ struct Request {
 #[derive(Debug, Serialize, Deserialize)]
 struct Response {
     #[serde(flatten)]
-    message: Message,
+    message_info: Message,
     request_seq: u64,
     success: bool,
     command: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     body: Option<Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    message: Option<String>,
+    message_text: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Event {
     #[serde(flatten)]
-    message: Message,
+    message_info: Message,
     event: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     body: Option<Value>,
@@ -381,7 +381,7 @@ impl DebugServer {
                 });
                 
                 Response {
-                    message: Message {
+                    message_info: Message {
                         seq,
                         message_type: "response".to_string(),
                     },
@@ -389,7 +389,7 @@ impl DebugServer {
                     success: true,
                     command,
                     body: Some(body),
-                    message: None,
+                    message_text: None,
                 }
             }
             "launch" => {
@@ -406,35 +406,35 @@ impl DebugServer {
                         match debugger.start(stop_on_entry) {
                             Ok(()) => {
                                 Response {
-                                    message: Message {
-                                        seq,
-                                        message_type: "response".to_string(),
-                                    },
-                                    request_seq,
-                                    success: true,
-                                    command,
-                                    body: None,
-                                    message: None,
+                                message_info: Message {
+                                    seq,
+                                    message_type: "response".to_string(),
+                                },
+                                request_seq,
+                                success: true,
+                                command,
+                                body: None,
+                                message_text: None,
                                 }
                             }
                             Err(e) => {
                                 Response {
-                                    message: Message {
-                                        seq,
-                                        message_type: "response".to_string(),
-                                    },
-                                    request_seq,
-                                    success: false,
-                                    command,
-                                    body: None,
-                                    message: Some(e),
+                                message_info: Message {
+                                    seq,
+                                    message_type: "response".to_string(),
+                                },
+                                request_seq,
+                                success: false,
+                                command,
+                                body: None,
+                                message_text: Some(e),
                                 }
                             }
                         }
                     }
                     Err(e) => {
                         Response {
-                            message: Message {
+                            message_info: Message {
                                 seq,
                                 message_type: "response".to_string(),
                             },
@@ -442,7 +442,7 @@ impl DebugServer {
                             success: false,
                             command,
                             body: None,
-                            message: Some(e),
+                            message_text: Some(e),
                         }
                     }
                 }
@@ -450,9 +450,11 @@ impl DebugServer {
             "setBreakpoints" => {
                 // Set breakpoints
                 let arguments = request.arguments.unwrap_or_default();
-                let source = arguments.get("source").and_then(|v| v.as_object()).unwrap_or(&serde_json::Map::new());
+                let empty_map = serde_json::Map::new();
+                let source = arguments.get("source").and_then(|v| v.as_object()).unwrap_or(&empty_map);
                 let path = source.get("path").and_then(|v| v.as_str()).unwrap_or("");
-                let breakpoints = arguments.get("breakpoints").and_then(|v| v.as_array()).unwrap_or(&Vec::new());
+                let empty_vec = Vec::new();
+                let breakpoints = arguments.get("breakpoints").and_then(|v| v.as_array()).unwrap_or(&empty_vec);
                 
                 // Convert the breakpoints
                 let breakpoints: Vec<Breakpoint> = breakpoints.iter().enumerate().map(|(i, bp)| {
@@ -486,7 +488,7 @@ impl DebugServer {
                 }).collect();
                 
                 Response {
-                    message: Message {
+                    message_info: Message {
                         seq,
                         message_type: "response".to_string(),
                     },
@@ -496,13 +498,13 @@ impl DebugServer {
                     body: Some(serde_json::json!({
                         "breakpoints": breakpoints,
                     })),
-                    message: None,
+                    message_text: None,
                 }
             }
             "configurationDone" => {
                 // Configuration is done
                 Response {
-                    message: Message {
+                    message_info: Message {
                         seq,
                         message_type: "response".to_string(),
                     },
@@ -510,7 +512,7 @@ impl DebugServer {
                     success: true,
                     command,
                     body: None,
-                    message: None,
+                    message_text: None,
                 }
             }
             "continue" => {
@@ -518,7 +520,7 @@ impl DebugServer {
                 match debugger.continue_execution() {
                     Ok(()) => {
                         Response {
-                            message: Message {
+                            message_info: Message {
                                 seq,
                                 message_type: "response".to_string(),
                             },
@@ -528,12 +530,12 @@ impl DebugServer {
                             body: Some(serde_json::json!({
                                 "allThreadsContinued": true,
                             })),
-                            message: None,
+                            message_text: None,
                         }
                     }
                     Err(e) => {
                         Response {
-                            message: Message {
+                            message_info: Message {
                                 seq,
                                 message_type: "response".to_string(),
                             },
@@ -541,7 +543,7 @@ impl DebugServer {
                             success: false,
                             command,
                             body: None,
-                            message: Some(e),
+                            message_text: Some(e),
                         }
                     }
                 }
@@ -551,7 +553,7 @@ impl DebugServer {
                 match debugger.step_over() {
                     Ok(()) => {
                         Response {
-                            message: Message {
+                            message_info: Message {
                                 seq,
                                 message_type: "response".to_string(),
                             },
@@ -559,12 +561,12 @@ impl DebugServer {
                             success: true,
                             command,
                             body: None,
-                            message: None,
+                            message_text: None,
                         }
                     }
                     Err(e) => {
                         Response {
-                            message: Message {
+                            message_info: Message {
                                 seq,
                                 message_type: "response".to_string(),
                             },
@@ -572,7 +574,7 @@ impl DebugServer {
                             success: false,
                             command,
                             body: None,
-                            message: Some(e),
+                            message_text: Some(e),
                         }
                     }
                 }
@@ -582,7 +584,7 @@ impl DebugServer {
                 match debugger.step_into() {
                     Ok(()) => {
                         Response {
-                            message: Message {
+                            message_info: Message {
                                 seq,
                                 message_type: "response".to_string(),
                             },
@@ -590,12 +592,12 @@ impl DebugServer {
                             success: true,
                             command,
                             body: None,
-                            message: None,
+                            message_text: None,
                         }
                     }
                     Err(e) => {
                         Response {
-                            message: Message {
+                            message_info: Message {
                                 seq,
                                 message_type: "response".to_string(),
                             },
@@ -603,7 +605,7 @@ impl DebugServer {
                             success: false,
                             command,
                             body: None,
-                            message: Some(e),
+                            message_text: Some(e),
                         }
                     }
                 }
@@ -613,7 +615,7 @@ impl DebugServer {
                 match debugger.step_out() {
                     Ok(()) => {
                         Response {
-                            message: Message {
+                            message_info: Message {
                                 seq,
                                 message_type: "response".to_string(),
                             },
@@ -621,12 +623,12 @@ impl DebugServer {
                             success: true,
                             command,
                             body: None,
-                            message: None,
+                            message_text: None,
                         }
                     }
                     Err(e) => {
                         Response {
-                            message: Message {
+                            message_info: Message {
                                 seq,
                                 message_type: "response".to_string(),
                             },
@@ -634,7 +636,7 @@ impl DebugServer {
                             success: false,
                             command,
                             body: None,
-                            message: Some(e),
+                            message_text: Some(e),
                         }
                     }
                 }
@@ -642,7 +644,7 @@ impl DebugServer {
             "threads" => {
                 // Get threads
                 Response {
-                    message: Message {
+                    message_info: Message {
                         seq,
                         message_type: "response".to_string(),
                     },
@@ -657,7 +659,7 @@ impl DebugServer {
                             }
                         ],
                     })),
-                    message: None,
+                    message_text: None,
                 }
             }
             "stackTrace" => {
@@ -679,7 +681,7 @@ impl DebugServer {
                 }).collect();
                 
                 Response {
-                    message: Message {
+                    message_info: Message {
                         seq,
                         message_type: "response".to_string(),
                     },
@@ -690,13 +692,13 @@ impl DebugServer {
                         "stackFrames": frames,
                         "totalFrames": frames.len(),
                     })),
-                    message: None,
+                    message_text: None,
                 }
             }
             "scopes" => {
                 // Get scopes
                 Response {
-                    message: Message {
+                    message_info: Message {
                         seq,
                         message_type: "response".to_string(),
                     },
@@ -712,7 +714,7 @@ impl DebugServer {
                             }
                         ],
                     })),
-                    message: None,
+                    message_text: None,
                 }
             }
             "variables" => {
@@ -741,7 +743,7 @@ impl DebugServer {
                 }).collect();
                 
                 Response {
-                    message: Message {
+                    message_info: Message {
                         seq,
                         message_type: "response".to_string(),
                     },
@@ -751,7 +753,7 @@ impl DebugServer {
                     body: Some(serde_json::json!({
                         "variables": variables,
                     })),
-                    message: None,
+                    message_text: None,
                 }
             }
             "evaluate" => {
@@ -762,7 +764,7 @@ impl DebugServer {
                 match debugger.evaluate(expression) {
                     Ok(value) => {
                         Response {
-                            message: Message {
+                            message_info: Message {
                                 seq,
                                 message_type: "response".to_string(),
                             },
@@ -785,12 +787,12 @@ impl DebugServer {
                                 },
                                 "variablesReference": 0,
                             })),
-                            message: None,
+                            message_text: None,
                         }
                     }
                     Err(e) => {
                         Response {
-                            message: Message {
+                            message_info: Message {
                                 seq,
                                 message_type: "response".to_string(),
                             },
@@ -798,7 +800,7 @@ impl DebugServer {
                             success: false,
                             command,
                             body: None,
-                            message: Some(e),
+                            message_text: Some(e),
                         }
                     }
                 }
@@ -806,7 +808,7 @@ impl DebugServer {
             "disconnect" => {
                 // Disconnect the debugger
                 Response {
-                    message: Message {
+                    message_info: Message {
                         seq,
                         message_type: "response".to_string(),
                     },
@@ -814,13 +816,13 @@ impl DebugServer {
                     success: true,
                     command,
                     body: None,
-                    message: None,
+                    message_text: None,
                 }
             }
             _ => {
                 // Unknown command
                 Response {
-                    message: Message {
+                    message_info: Message {
                         seq,
                         message_type: "response".to_string(),
                     },
@@ -828,7 +830,7 @@ impl DebugServer {
                     success: false,
                     command,
                     body: None,
-                    message: Some(format!("Unknown command: {}", request.command)),
+                    message_text: Some(format!("Unknown command: {}", request.command)),
                 }
             }
         }
@@ -841,7 +843,7 @@ impl DebugServer {
         let seq = debugger.next_seq();
         
         Event {
-            message: Message {
+            message_info: Message {
                 seq,
                 message_type: "event".to_string(),
             },
@@ -882,10 +884,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn handle_connection(stream: TcpStream, debug_server: Arc<DebugServer>) -> Result<(), Box<dyn std::error::Error>> {
-    let (reader, writer) = stream.into_split();
-    let reader = BufReader::new(reader);
-    let writer = BufWriter::new(writer);
+async fn handle_connection(stream: TcpStream, debug_server: Arc<DebugServer>) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    // Use standard IO for communication
+    let reader = BufReader::new(stream.try_clone().expect("Failed to clone stream"));
+    let writer = BufWriter::new(stream);
     
     // Create a JSON-RPC server
     let mut server = jsonrpc::Server::new(reader, writer);
@@ -966,18 +968,13 @@ async fn handle_connection(stream: TcpStream, debug_server: Arc<DebugServer>) ->
 mod jsonrpc {
     use std::io::{BufRead, BufReader, BufWriter, Read, Write};
     use std::marker::Unpin;
-    use std::sync::Arc;
-    use tokio::io::{AsyncBufRead, AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
-    use tokio::sync::Mutex;
-    use serde_json::Value;
-    use log::{debug, error, info, warn};
     
     use super::{Request, Response, Event};
     
     pub struct Server<R, W>
     where
-        R: AsyncRead + Unpin,
-        W: AsyncWrite + Unpin,
+        R: Read,
+        W: Write,
     {
         reader: BufReader<R>,
         writer: BufWriter<W>,
@@ -985,8 +982,8 @@ mod jsonrpc {
     
     impl<R, W> Server<R, W>
     where
-        R: AsyncRead + Unpin,
-        W: AsyncWrite + Unpin,
+        R: Read,
+        W: Write,
     {
         /// Create a new JSON-RPC server
         pub fn new(reader: R, writer: W) -> Self {
@@ -997,13 +994,13 @@ mod jsonrpc {
         }
         
         /// Receive a request
-        pub async fn receive_request(&mut self) -> Result<Request, Box<dyn std::error::Error>> {
+        pub async fn receive_request(&mut self) -> Result<Request, Box<dyn std::error::Error + Send + Sync>> {
             // Read the Content-Length header
             let mut content_length = None;
             
             loop {
                 let mut line = String::new();
-                let bytes_read = self.reader.read_line(&mut line).await?;
+                let bytes_read = self.reader.read_line(&mut line)?;
                 
                 if bytes_read == 0 {
                     return Err("Connection closed".into());
@@ -1024,7 +1021,7 @@ mod jsonrpc {
             // Read the content
             let content_length = content_length.ok_or("Missing Content-Length header")?;
             let mut content = vec![0; content_length];
-            self.reader.read_exact(&mut content).await?;
+            self.reader.read_exact(&mut content)?;
             
             // Parse the content
             let request: Request = serde_json::from_slice(&content)?;
@@ -1033,31 +1030,31 @@ mod jsonrpc {
         }
         
         /// Send a response
-        pub async fn send_response(&mut self, response: &Response) -> Result<(), Box<dyn std::error::Error>> {
+        pub async fn send_response(&mut self, response: &Response) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             // Serialize the response
             let content = serde_json::to_vec(response)?;
             
             // Write the headers
-            self.writer.write_all(format!("Content-Length: {}\r\n\r\n", content.len()).as_bytes()).await?;
+            self.writer.write_all(format!("Content-Length: {}\r\n\r\n", content.len()).as_bytes())?;
             
             // Write the content
-            self.writer.write_all(&content).await?;
-            self.writer.flush().await?;
+            self.writer.write_all(&content)?;
+            self.writer.flush()?;
             
             Ok(())
         }
         
         /// Send an event
-        pub async fn send_event(&mut self, event: &Event) -> Result<(), Box<dyn std::error::Error>> {
+        pub async fn send_event(&mut self, event: &Event) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             // Serialize the event
             let content = serde_json::to_vec(event)?;
             
             // Write the headers
-            self.writer.write_all(format!("Content-Length: {}\r\n\r\n", content.len()).as_bytes()).await?;
+            self.writer.write_all(format!("Content-Length: {}\r\n\r\n", content.len()).as_bytes())?;
             
             // Write the content
-            self.writer.write_all(&content).await?;
-            self.writer.flush().await?;
+            self.writer.write_all(&content)?;
+            self.writer.flush()?;
             
             Ok(())
         }

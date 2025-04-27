@@ -171,6 +171,37 @@ Check out the `examples/` directory for more sample programs:
 - [Standard Library](docs/standard_library.md)
 - [Prototype Implementation Plan](docs/prototype_implementation_plan.md)
 - [Project Structure](docs/project_structure.md)
+- [Debugger Instructions](DEBUG_INSTRUCTIONS.md)
+
+## Debugging
+
+LLM.lang includes a VSCode debugger extension that allows you to debug your LLM.lang programs. The debugger supports:
+
+- Setting breakpoints
+- Stepping through code
+- Inspecting variables
+- Evaluating expressions
+- Viewing the call stack
+
+To use the debugger:
+
+1. Build the required components:
+   ```bash
+   # Build the debug adapter
+   cargo build --release -p llm_lang_dap
+   
+   # Build the language server
+   cargo build --release -p llm_lang_lsp
+   ```
+
+2. Launch VSCode with the LLM.lang extension:
+   ```bash
+   ./launch_vscode.sh
+   ```
+
+3. Open an LLM.lang file, set breakpoints, and press F5 to start debugging.
+
+For detailed instructions, see the [Debugger Instructions](DEBUG_INSTRUCTIONS.md).
 
 ## Why LLM.lang?
 

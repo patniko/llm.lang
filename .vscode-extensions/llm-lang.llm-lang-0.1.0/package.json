@@ -1,0 +1,151 @@
+{
+	"name": "llm-lang",
+	"displayName": "LLM.lang",
+	"description": "LLM.lang language support for VS Code",
+	"version": "0.1.0",
+	"publisher": "llm-lang",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/patniko/llm.lang"
+	},
+	"engines": {
+		"vscode": "^1.60.0"
+	},
+	"categories": [
+		"Programming Languages",
+		"Debuggers"
+	],
+	"activationEvents": [
+		"onLanguage:llm",
+		"onDebug"
+	],
+	"main": "./extension.js",
+	"contributes": {
+		"languages": [
+			{
+				"id": "llm",
+				"aliases": [
+					"LLM.lang",
+					"llm"
+				],
+				"extensions": [
+					".llm"
+				],
+				"configuration": "./language-configuration.json"
+			}
+		],
+		"grammars": [
+			{
+				"language": "llm",
+				"scopeName": "source.llm",
+				"path": "./syntaxes/llm.tmLanguage.json"
+			}
+		],
+		"breakpoints": [
+			{
+				"language": "llm"
+			}
+		],
+		"debuggers": [
+			{
+				"type": "llm-lang",
+				"label": "LLM.lang Debug",
+				"program": "./debugAdapter.js",
+				"runtime": "node",
+				"configurationAttributes": {
+					"launch": {
+						"required": [
+							"program"
+						],
+						"properties": {
+							"program": {
+								"type": "string",
+								"description": "Absolute path to a LLM.lang file.",
+								"default": "${file}"
+							},
+							"stopOnEntry": {
+								"type": "boolean",
+								"description": "Automatically stop after launch.",
+								"default": true
+							}
+						}
+					}
+				},
+				"initialConfigurations": [
+					{
+						"type": "llm-lang",
+						"request": "launch",
+						"name": "Launch LLM.lang Program",
+						"program": "${file}",
+						"stopOnEntry": true
+					}
+				],
+				"configurationSnippets": [
+					{
+						"label": "LLM.lang: Launch Program",
+						"description": "A new configuration for launching a LLM.lang program",
+						"body": {
+							"type": "llm-lang",
+							"request": "launch",
+							"name": "${1:Launch Program}",
+							"program": "^\"\\${file}\"",
+							"stopOnEntry": true
+						}
+					}
+				]
+			}
+		],
+		"commands": [
+			{
+				"command": "llm-lang.restart",
+				"title": "LLM.lang: Restart Language Server"
+			}
+		],
+		"configuration": {
+			"type": "object",
+			"title": "LLM.lang",
+			"properties": {
+				"llm-lang.lspPath": {
+					"type": "string",
+					"default": "llm_lang_lsp",
+					"description": "Path to the LLM.lang Language Server executable"
+				},
+				"llm-lang.dapPath": {
+					"type": "string",
+					"default": "llm_lang_dap",
+					"description": "Path to the LLM.lang Debug Adapter executable"
+				},
+				"llm-lang.trace.server": {
+					"type": "string",
+					"enum": [
+						"off",
+						"messages",
+						"verbose"
+					],
+					"default": "off",
+					"description": "Traces the communication between VS Code and the language server"
+				}
+			}
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "echo 'No compilation needed'",
+		"lint": "eslint ."
+	},
+	"dependencies": {
+		"vscode-languageclient": "^7.0.0",
+		"@vscode/debugadapter": "^1.60.0",
+		"@vscode/debugprotocol": "^1.60.0"
+	},
+	"devDependencies": {
+		"@types/node": "^16.11.7",
+		"@types/vscode": "^1.60.0",
+		"eslint": "^8.1.0",
+		"typescript": "^4.4.4"
+	},
+	"__metadata": {
+		"installedTimestamp": 1745724333909,
+		"targetPlatform": "undefined",
+		"size": 1700077
+	}
+}
