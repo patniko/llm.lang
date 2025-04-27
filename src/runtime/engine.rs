@@ -17,6 +17,7 @@ use super::parallel::Parallel;
 use super::example::Example;
 use super::nlp::NLP;
 use super::interop::Interop;
+use super::modify::{Modify, Modification};
 
 /// Options for the runtime engine
 #[derive(Debug, Clone)]
@@ -38,6 +39,9 @@ pub struct EngineOptions {
     
     /// Whether to enable natural language processing
     pub nlp: bool,
+    
+    /// Whether to enable self-modifying capabilities
+    pub self_modifying: bool,
 }
 
 impl Default for EngineOptions {
@@ -49,6 +53,7 @@ impl Default for EngineOptions {
             parallel: true,
             vectors: true,
             nlp: true,
+            self_modifying: true,
         }
     }
 }
@@ -79,6 +84,9 @@ pub struct Engine {
     /// The interoperability manager
     interop: Interop,
     
+    /// The code modifier
+    modify: Modify,
+    
     /// The start time of execution
     start_time: Option<Instant>,
     
@@ -101,6 +109,7 @@ impl Engine {
             example: Example::new(),
             nlp: NLP::new(),
             interop: Interop::new(),
+            modify: Modify::new(),
             start_time: None,
             instructions: 0,
             peak_memory: 0,
@@ -681,8 +690,198 @@ impl Engine {
                     self.memory.recall_most_relevant()
                 }
             }
+            "@modify" => {
+                // Check if self-modifying capabilities are enabled
+                if !self.options.self_modifying {
+                    return Err(RuntimeError::feature_disabled("Self-modifying", node.location.clone()));
+                }
+                
+                // Get the target
+                let target = node.get_attribute("target").ok_or_else(|| {
+                    RuntimeError::missing_attribute("target", node.location.clone())
+                })?;
+                
+                // Get the operation
+                let operation = node.get_attribute("operation").ok_or_else(|| {
+                    RuntimeError::missing_attribute("operation", node.location.clone())
+                })?;
+                
+                // Execute the modification
+                self.execute_modification(target, operation, node)?;
+                
+                Ok(Value::Void)
+            }
             _ => Err(RuntimeError::unknown_semantic_token(token, node.location.clone())),
         }
+    }
+    
+    /// Execute a code modification
+    fn execute_modification(&mut self, target: &str, operation: &str, node: &Node) -> Result<(), RuntimeError> {
+        // Get the source code
+        let source = if let Some(source) = self.modify.get_source(target) {
+            source.clone()
+        } else {
+            // Try to load the source code from a file
+            match std::fs::read_to_string(target) {
+                Ok(source) => {
+                    // Cache the source code
+                    self.modify.cache_source(target, &source);
+                    source
+                }
+                Err(e) => {
+                    return Err(RuntimeError::new(
+                        &format!("Failed to load source code: {}", e),
+                        node.location.clone(),
+                    ));
+                }
+            }
+        };
+        
+        // Parse the source code into an AST
+        let ast = self.modify.parse_source(&source)?;
+        
+        // Cache the AST
+        self.modify.cache_ast(target, ast.clone());
+        
+        // Create a list of modifications
+        let mut modifications = Vec::new();
+        
+        // Apply the operation
+        match operation {
+            "replace" => {
+                // Get the path
+                let path_str = node.get_attribute("path").ok_or_else(|| {
+                    RuntimeError::missing_attribute("path", node.location.clone())
+                })?;
+                
+                // Parse the path
+                let path = path_str.split('.').map(|s| s.parse::<usize>().unwrap_or(0)).collect::<Vec<usize>>();
+                
+                // Get the new code
+                let new_code = node.get_attribute("code").ok_or_else(|| {
+                    RuntimeError::missing_attribute("code", node.location.clone())
+                })?;
+                
+                // Parse the new code into an AST
+                let new_ast = self.modify.parse_source(new_code)?;
+                
+                // Add the modification
+                modifications.push(Modification::ReplaceNode {
+                    path,
+                    new_node: (*new_ast.root()).clone(),
+                });
+            }
+            "insert" => {
+                // Get the path
+                let path_str = node.get_attribute("path").ok_or_else(|| {
+                    RuntimeError::missing_attribute("path", node.location.clone())
+                })?;
+                
+                // Parse the path
+                let path = path_str.split('.').map(|s| s.parse::<usize>().unwrap_or(0)).collect::<Vec<usize>>();
+                
+                // Get the position
+                let position = node.get_attribute("position").ok_or_else(|| {
+                    RuntimeError::missing_attribute("position", node.location.clone())
+                })?;
+                
+                let position = position.parse::<usize>().map_err(|_| {
+                    RuntimeError::new(
+                        &format!("Invalid position: {}", position),
+                        node.location.clone(),
+                    )
+                })?;
+                
+                // Get the new code
+                let new_code = node.get_attribute("code").ok_or_else(|| {
+                    RuntimeError::missing_attribute("code", node.location.clone())
+                })?;
+                
+                // Parse the new code into an AST
+                let new_ast = self.modify.parse_source(new_code)?;
+                
+                // Add the modification
+                modifications.push(Modification::InsertNode {
+                    path,
+                    new_node: (*new_ast.root()).clone(),
+                    position,
+                });
+            }
+            "delete" => {
+                // Get the path
+                let path_str = node.get_attribute("path").ok_or_else(|| {
+                    RuntimeError::missing_attribute("path", node.location.clone())
+                })?;
+                
+                // Parse the path
+                let path = path_str.split('.').map(|s| s.parse::<usize>().unwrap_or(0)).collect::<Vec<usize>>();
+                
+                // Add the modification
+                modifications.push(Modification::DeleteNode {
+                    path,
+                });
+            }
+            "modify" => {
+                // Get the path
+                let path_str = node.get_attribute("path").ok_or_else(|| {
+                    RuntimeError::missing_attribute("path", node.location.clone())
+                })?;
+                
+                // Parse the path
+                let path = path_str.split('.').map(|s| s.parse::<usize>().unwrap_or(0)).collect::<Vec<usize>>();
+                
+                // Get the attribute name
+                let name = node.get_attribute("name").ok_or_else(|| {
+                    RuntimeError::missing_attribute("name", node.location.clone())
+                })?;
+                
+                // Get the attribute value
+                let value = node.get_attribute("value").ok_or_else(|| {
+                    RuntimeError::missing_attribute("value", node.location.clone())
+                })?;
+                
+                // Add the modification
+                modifications.push(Modification::ModifyAttribute {
+                    path,
+                    name: name.to_string(),
+                    value: value.to_string(),
+                });
+            }
+            _ => {
+                return Err(RuntimeError::new(
+                    &format!("Unknown operation: {}", operation),
+                    node.location.clone(),
+                ));
+            }
+        }
+        
+        // Apply the modifications
+        let mut modified_ast = ast.clone();
+        self.modify.modify_ast(&mut modified_ast, &modifications)?;
+        
+        // Update the AST cache
+        self.modify.cache_ast(target, modified_ast.clone());
+        
+        // Generate the new source code
+        let new_source = self.modify.generate_source(&modified_ast)?;
+        
+        // Update the source cache
+        self.modify.cache_source(target, &new_source);
+        
+        // Try to write the new source code to a file
+        if target.ends_with(".llm") {
+            match std::fs::write(target, new_source) {
+                Ok(_) => {}
+                Err(e) => {
+                    return Err(RuntimeError::new(
+                        &format!("Failed to write source code: {}", e),
+                        node.location.clone(),
+                    ));
+                }
+            }
+        }
+        
+        Ok(())
     }
     
     /// Execute an assignment node

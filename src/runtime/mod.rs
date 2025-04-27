@@ -12,6 +12,7 @@ pub mod parallel;
 pub mod example;
 pub mod nlp;
 pub mod interop;
+pub mod modify;
 
 // Re-export commonly used types and functions
 pub use self::engine::Engine;
@@ -23,6 +24,7 @@ pub use self::parallel::Parallel;
 pub use self::example::Example;
 pub use self::nlp::NLP;
 pub use self::interop::Interop;
+pub use self::modify::Modify;
 
 /// The runtime environment for the LLM.lang language
 pub struct Runtime {
@@ -49,6 +51,9 @@ pub struct Runtime {
     
     /// The interoperability manager
     interop: Interop,
+    
+    /// The code modifier
+    modify: Modify,
 }
 
 impl Runtime {
@@ -63,6 +68,7 @@ impl Runtime {
             example: Example::new(),
             nlp: NLP::new(),
             interop: Interop::new(),
+            modify: Modify::new(),
         }
     }
     

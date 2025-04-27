@@ -252,32 +252,393 @@ impl StdLib {
     
     /// Apply a function to each element of a collection
     fn map(arguments: Vec<Value>) -> Result<Value, RuntimeError> {
-        // This is a placeholder implementation
-        // In a real implementation, this would apply a function to each element
-        Err(RuntimeError::new(
-            "map() is not implemented yet",
-            SourceLocation::new(0, 0, 0, 0, ""),
-        ))
+        if arguments.len() != 2 {
+            return Err(RuntimeError::new(
+                "map() requires exactly two arguments: collection and function",
+                SourceLocation::new(0, 0, 0, 0, ""),
+            ));
+        }
+        
+        let collection = &arguments[0];
+        let function = &arguments[1];
+        
+        match collection {
+            Value::List(items) => {
+                let mut result = Vec::new();
+                
+                for item in items {
+                    match function {
+                        Value::Function(name) => {
+                            // Create a new standard library to call the function
+                            let stdlib = StdLib::new();
+                            
+                            // Call the function with the item as an argument
+                            let mapped_value = stdlib.call_function(name, vec![item.clone()])?;
+                            
+                            // Add the result to the new list
+                            result.push(mapped_value);
+                        }
+                        _ => {
+                            return Err(RuntimeError::new(
+                                &format!("Second argument to map() must be a function, got {:?}", function),
+                                SourceLocation::new(0, 0, 0, 0, ""),
+                            ));
+                        }
+                    }
+                }
+                
+                Ok(Value::List(result))
+            }
+            Value::String(s) => {
+                // For strings, map each character
+                let mut result = Vec::new();
+                
+                for c in s.chars() {
+                    match function {
+                        Value::Function(name) => {
+                            // Create a new standard library to call the function
+                            let stdlib = StdLib::new();
+                            
+                            // Call the function with the character as an argument
+                            let mapped_value = stdlib.call_function(name, vec![Value::String(c.to_string())])?;
+                            
+                            // Add the result to the new list
+                            result.push(mapped_value);
+                        }
+                        _ => {
+                            return Err(RuntimeError::new(
+                                &format!("Second argument to map() must be a function, got {:?}", function),
+                                SourceLocation::new(0, 0, 0, 0, ""),
+                            ));
+                        }
+                    }
+                }
+                
+                Ok(Value::List(result))
+            }
+            Value::Map(map) => {
+                // For maps, map each key-value pair
+                let mut result = Vec::new();
+                
+                for (key, value) in map {
+                    match function {
+                        Value::Function(name) => {
+                            // Create a new standard library to call the function
+                            let stdlib = StdLib::new();
+                            
+                            // Create a map for the key-value pair
+                            let mut pair = HashMap::new();
+                            pair.insert("key".to_string(), Value::String(key.clone()));
+                            pair.insert("value".to_string(), value.clone());
+                            
+                            // Call the function with the pair as an argument
+                            let mapped_value = stdlib.call_function(name, vec![Value::Map(pair)])?;
+                            
+                            // Add the result to the new list
+                            result.push(mapped_value);
+                        }
+                        _ => {
+                            return Err(RuntimeError::new(
+                                &format!("Second argument to map() must be a function, got {:?}", function),
+                                SourceLocation::new(0, 0, 0, 0, ""),
+                            ));
+                        }
+                    }
+                }
+                
+                Ok(Value::List(result))
+            }
+            _ => Err(RuntimeError::new(
+                &format!("Cannot map over {:?}", collection),
+                SourceLocation::new(0, 0, 0, 0, ""),
+            )),
+        }
     }
     
     /// Filter a collection based on a predicate
     fn filter(arguments: Vec<Value>) -> Result<Value, RuntimeError> {
-        // This is a placeholder implementation
-        // In a real implementation, this would filter a collection
-        Err(RuntimeError::new(
-            "filter() is not implemented yet",
-            SourceLocation::new(0, 0, 0, 0, ""),
-        ))
+        if arguments.len() != 2 {
+            return Err(RuntimeError::new(
+                "filter() requires exactly two arguments: collection and predicate",
+                SourceLocation::new(0, 0, 0, 0, ""),
+            ));
+        }
+        
+        let collection = &arguments[0];
+        let predicate = &arguments[1];
+        
+        match collection {
+            Value::List(items) => {
+                let mut result = Vec::new();
+                
+                for item in items {
+                    match predicate {
+                        Value::Function(name) => {
+                            // Create a new standard library to call the function
+                            let stdlib = StdLib::new();
+                            
+                            // Call the predicate with the item as an argument
+                            let predicate_result = stdlib.call_function(name, vec![item.clone()])?;
+                            
+                            // Check if the predicate returned true
+                            if let Value::Bool(true) = predicate_result {
+                                // Add the item to the filtered list
+                                result.push(item.clone());
+                            }
+                        }
+                        _ => {
+                            return Err(RuntimeError::new(
+                                &format!("Second argument to filter() must be a function, got {:?}", predicate),
+                                SourceLocation::new(0, 0, 0, 0, ""),
+                            ));
+                        }
+                    }
+                }
+                
+                Ok(Value::List(result))
+            }
+            Value::String(s) => {
+                // For strings, filter each character
+                let mut result = String::new();
+                
+                for c in s.chars() {
+                    match predicate {
+                        Value::Function(name) => {
+                            // Create a new standard library to call the function
+                            let stdlib = StdLib::new();
+                            
+                            // Call the predicate with the character as an argument
+                            let predicate_result = stdlib.call_function(name, vec![Value::String(c.to_string())])?;
+                            
+                            // Check if the predicate returned true
+                            if let Value::Bool(true) = predicate_result {
+                                // Add the character to the filtered string
+                                result.push(c);
+                            }
+                        }
+                        _ => {
+                            return Err(RuntimeError::new(
+                                &format!("Second argument to filter() must be a function, got {:?}", predicate),
+                                SourceLocation::new(0, 0, 0, 0, ""),
+                            ));
+                        }
+                    }
+                }
+                
+                Ok(Value::String(result))
+            }
+            Value::Map(map) => {
+                // For maps, filter each key-value pair
+                let mut result = HashMap::new();
+                
+                for (key, value) in map {
+                    match predicate {
+                        Value::Function(name) => {
+                            // Create a new standard library to call the function
+                            let stdlib = StdLib::new();
+                            
+                            // Create a map for the key-value pair
+                            let mut pair = HashMap::new();
+                            pair.insert("key".to_string(), Value::String(key.clone()));
+                            pair.insert("value".to_string(), value.clone());
+                            
+                            // Call the predicate with the pair as an argument
+                            let predicate_result = stdlib.call_function(name, vec![Value::Map(pair)])?;
+                            
+                            // Check if the predicate returned true
+                            if let Value::Bool(true) = predicate_result {
+                                // Add the key-value pair to the filtered map
+                                result.insert(key.clone(), value.clone());
+                            }
+                        }
+                        _ => {
+                            return Err(RuntimeError::new(
+                                &format!("Second argument to filter() must be a function, got {:?}", predicate),
+                                SourceLocation::new(0, 0, 0, 0, ""),
+                            ));
+                        }
+                    }
+                }
+                
+                Ok(Value::Map(result))
+            }
+            _ => Err(RuntimeError::new(
+                &format!("Cannot filter {:?}", collection),
+                SourceLocation::new(0, 0, 0, 0, ""),
+            )),
+        }
     }
     
     /// Reduce a collection to a single value
     fn reduce(arguments: Vec<Value>) -> Result<Value, RuntimeError> {
-        // This is a placeholder implementation
-        // In a real implementation, this would reduce a collection
-        Err(RuntimeError::new(
-            "reduce() is not implemented yet",
-            SourceLocation::new(0, 0, 0, 0, ""),
-        ))
+        if arguments.len() < 2 || arguments.len() > 3 {
+            return Err(RuntimeError::new(
+                "reduce() requires two or three arguments: collection, function, and optional initial value",
+                SourceLocation::new(0, 0, 0, 0, ""),
+            ));
+        }
+        
+        let collection = &arguments[0];
+        let function = &arguments[1];
+        let initial_value = if arguments.len() == 3 {
+            Some(&arguments[2])
+        } else {
+            None
+        };
+        
+        match collection {
+            Value::List(items) => {
+                if items.is_empty() {
+                    // If the list is empty, return the initial value or an error
+                    return if let Some(initial) = initial_value {
+                        Ok(initial.clone())
+                    } else {
+                        Err(RuntimeError::new(
+                            "Cannot reduce an empty list without an initial value",
+                            SourceLocation::new(0, 0, 0, 0, ""),
+                        ))
+                    };
+                }
+                
+                // Get the initial accumulator value
+                let mut accumulator = if let Some(initial) = initial_value {
+                    initial.clone()
+                } else {
+                    items[0].clone()
+                };
+                
+                // Start reducing from the first or second item
+                let start_index = if initial_value.is_some() { 0 } else { 1 };
+                
+                for i in start_index..items.len() {
+                    match function {
+                        Value::Function(name) => {
+                            // Create a new standard library to call the function
+                            let stdlib = StdLib::new();
+                            
+                            // Call the function with the accumulator and current item
+                            accumulator = stdlib.call_function(name, vec![accumulator, items[i].clone()])?;
+                        }
+                        _ => {
+                            return Err(RuntimeError::new(
+                                &format!("Second argument to reduce() must be a function, got {:?}", function),
+                                SourceLocation::new(0, 0, 0, 0, ""),
+                            ));
+                        }
+                    }
+                }
+                
+                Ok(accumulator)
+            }
+            Value::String(s) => {
+                if s.is_empty() {
+                    // If the string is empty, return the initial value or an error
+                    return if let Some(initial) = initial_value {
+                        Ok(initial.clone())
+                    } else {
+                        Err(RuntimeError::new(
+                            "Cannot reduce an empty string without an initial value",
+                            SourceLocation::new(0, 0, 0, 0, ""),
+                        ))
+                    };
+                }
+                
+                // Get the initial accumulator value
+                let mut accumulator = if let Some(initial) = initial_value {
+                    initial.clone()
+                } else {
+                    Value::String(s.chars().next().unwrap().to_string())
+                };
+                
+                // Start reducing from the first or second character
+                let chars: Vec<char> = s.chars().collect();
+                let start_index = if initial_value.is_some() { 0 } else { 1 };
+                
+                for i in start_index..chars.len() {
+                    match function {
+                        Value::Function(name) => {
+                            // Create a new standard library to call the function
+                            let stdlib = StdLib::new();
+                            
+                            // Call the function with the accumulator and current character
+                            accumulator = stdlib.call_function(name, vec![
+                                accumulator,
+                                Value::String(chars[i].to_string()),
+                            ])?;
+                        }
+                        _ => {
+                            return Err(RuntimeError::new(
+                                &format!("Second argument to reduce() must be a function, got {:?}", function),
+                                SourceLocation::new(0, 0, 0, 0, ""),
+                            ));
+                        }
+                    }
+                }
+                
+                Ok(accumulator)
+            }
+            Value::Map(map) => {
+                if map.is_empty() {
+                    // If the map is empty, return the initial value or an error
+                    return if let Some(initial) = initial_value {
+                        Ok(initial.clone())
+                    } else {
+                        Err(RuntimeError::new(
+                            "Cannot reduce an empty map without an initial value",
+                            SourceLocation::new(0, 0, 0, 0, ""),
+                        ))
+                    };
+                }
+                
+                // Get the initial accumulator value
+                let mut accumulator = if let Some(initial) = initial_value {
+                    initial.clone()
+                } else {
+                    // Use the first key-value pair as the initial value
+                    let (first_key, first_value) = map.iter().next().unwrap();
+                    let mut pair = HashMap::new();
+                    pair.insert("key".to_string(), Value::String(first_key.clone()));
+                    pair.insert("value".to_string(), first_value.clone());
+                    Value::Map(pair)
+                };
+                
+                // Start reducing from the first or second key-value pair
+                let entries: Vec<(&String, &Value)> = map.iter().collect();
+                let start_index = if initial_value.is_some() { 0 } else { 1 };
+                
+                for i in start_index..entries.len() {
+                    match function {
+                        Value::Function(name) => {
+                            // Create a new standard library to call the function
+                            let stdlib = StdLib::new();
+                            
+                            // Create a map for the current key-value pair
+                            let mut pair = HashMap::new();
+                            pair.insert("key".to_string(), Value::String(entries[i].0.clone()));
+                            pair.insert("value".to_string(), entries[i].1.clone());
+                            
+                            // Call the function with the accumulator and current pair
+                            accumulator = stdlib.call_function(name, vec![
+                                accumulator,
+                                Value::Map(pair),
+                            ])?;
+                        }
+                        _ => {
+                            return Err(RuntimeError::new(
+                                &format!("Second argument to reduce() must be a function, got {:?}", function),
+                                SourceLocation::new(0, 0, 0, 0, ""),
+                            ));
+                        }
+                    }
+                }
+                
+                Ok(accumulator)
+            }
+            _ => Err(RuntimeError::new(
+                &format!("Cannot reduce {:?}", collection),
+                SourceLocation::new(0, 0, 0, 0, ""),
+            )),
+        }
     }
     
     /// Get a substring of a string
@@ -484,12 +845,102 @@ impl StdLib {
     
     /// Find the nearest vectors to a given vector
     fn nearest(arguments: Vec<Value>) -> Result<Value, RuntimeError> {
-        // This is a placeholder implementation
-        // In a real implementation, this would find the nearest vectors
-        Err(RuntimeError::new(
-            "nearest() is not implemented yet",
-            SourceLocation::new(0, 0, 0, 0, ""),
-        ))
+        if arguments.len() < 2 || arguments.len() > 3 {
+            return Err(RuntimeError::new(
+                "nearest() requires two or three arguments: query vector, vector list, and optional count",
+                SourceLocation::new(0, 0, 0, 0, ""),
+            ));
+        }
+        
+        let query = &arguments[0];
+        let vectors = &arguments[1];
+        let count = if arguments.len() == 3 {
+            if let Value::Int(n) = &arguments[2] {
+                *n as usize
+            } else {
+                return Err(RuntimeError::new(
+                    &format!("Third argument to nearest() must be an integer, got {:?}", arguments[2]),
+                    SourceLocation::new(0, 0, 0, 0, ""),
+                ));
+            }
+        } else {
+            1 // Default to returning the single nearest vector
+        };
+        
+        // Check that the query is a vector
+        let query_vector = if let Value::Vector(v) = query {
+            v
+        } else {
+            return Err(RuntimeError::new(
+                &format!("First argument to nearest() must be a vector, got {:?}", query),
+                SourceLocation::new(0, 0, 0, 0, ""),
+            ));
+        };
+        
+        // Check that the vectors argument is a list
+        let vector_list = if let Value::List(list) = vectors {
+            list
+        } else {
+            return Err(RuntimeError::new(
+                &format!("Second argument to nearest() must be a list, got {:?}", vectors),
+                SourceLocation::new(0, 0, 0, 0, ""),
+            ));
+        };
+        
+        // Calculate similarities and sort
+        let mut similarities = Vec::new();
+        
+        for (i, item) in vector_list.iter().enumerate() {
+            if let Value::Vector(v) = item {
+                // Calculate cosine similarity
+                let similarity = Self::calculate_cosine_similarity(query_vector, v);
+                similarities.push((i, similarity));
+            } else {
+                return Err(RuntimeError::new(
+                    &format!("All items in the vector list must be vectors, got {:?} at index {}", item, i),
+                    SourceLocation::new(0, 0, 0, 0, ""),
+                ));
+            }
+        }
+        
+        // Sort by similarity (highest first)
+        similarities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        
+        // Take the top 'count' items
+        let mut result = Vec::new();
+        for (i, _) in similarities.into_iter().take(count) {
+            result.push(vector_list[i].clone());
+        }
+        
+        Ok(Value::List(result))
+    }
+    
+    /// Calculate cosine similarity between two vectors
+    fn calculate_cosine_similarity(a: &[f64], b: &[f64]) -> f64 {
+        // Ensure vectors have the same length
+        let min_len = std::cmp::min(a.len(), b.len());
+        
+        // Calculate dot product
+        let mut dot_product = 0.0;
+        let mut magnitude_a = 0.0;
+        let mut magnitude_b = 0.0;
+        
+        for i in 0..min_len {
+            dot_product += a[i] * b[i];
+            magnitude_a += a[i] * a[i];
+            magnitude_b += b[i] * b[i];
+        }
+        
+        // Calculate magnitudes
+        magnitude_a = magnitude_a.sqrt();
+        magnitude_b = magnitude_b.sqrt();
+        
+        // Calculate cosine similarity
+        if magnitude_a > 0.0 && magnitude_b > 0.0 {
+            dot_product / (magnitude_a * magnitude_b)
+        } else {
+            0.0
+        }
     }
     
     /// Get the current context
@@ -531,12 +982,45 @@ impl StdLib {
     
     /// Merge two contexts
     fn merge_contexts(arguments: Vec<Value>) -> Result<Value, RuntimeError> {
-        // This is a placeholder implementation
-        // In a real implementation, this would merge two contexts
-        Err(RuntimeError::new(
-            "mergeContexts() is not implemented yet",
-            SourceLocation::new(0, 0, 0, 0, ""),
-        ))
+        if arguments.len() != 2 {
+            return Err(RuntimeError::new(
+                "mergeContexts() requires exactly two arguments: target context and source context",
+                SourceLocation::new(0, 0, 0, 0, ""),
+            ));
+        }
+        
+        let target = &arguments[0];
+        let source = &arguments[1];
+        
+        // Check that both arguments are contexts
+        let target_name = if let Value::Context(name) = target {
+            name.clone()
+        } else if let Value::String(name) = target {
+            name.clone()
+        } else {
+            return Err(RuntimeError::new(
+                &format!("First argument to mergeContexts() must be a context or string, got {:?}", target),
+                SourceLocation::new(0, 0, 0, 0, ""),
+            ));
+        };
+        
+        let source_name = if let Value::Context(name) = source {
+            name.clone()
+        } else if let Value::String(name) = source {
+            name.clone()
+        } else {
+            return Err(RuntimeError::new(
+                &format!("Second argument to mergeContexts() must be a context or string, got {:?}", source),
+                SourceLocation::new(0, 0, 0, 0, ""),
+            ));
+        };
+        
+        // Create a new merged context
+        let merged_name = format!("{}+{}", target_name, source_name);
+        
+        // In a real implementation, this would actually merge the contexts
+        // For now, we just return a new context with the merged name
+        Ok(Value::Context(merged_name))
     }
     
     /// Convert a value to a string

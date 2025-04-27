@@ -1,0 +1,71 @@
+// self_modifying.llm - A demonstration of LLM.lang's self-modifying capabilities
+// This example showcases how programs can modify their own code at runtime
+
+context MainProgram {
+    // Main function - entry point of the program
+    fn main() {
+        print("=== Self-Modifying Code Demonstration ===\n");
+        
+        // Define a simple function
+        fn greet(name: String) -> String {
+            return "Hello, " + name + "!";
+        }
+        
+        // Call the original function
+        var result = greet("World");
+        print("Original function result: " + result);
+        
+        // Modify the function at runtime
+        print("\nModifying the function...");
+        @modify target="examples/self_modifying.llm" operation="replace" path="0.0.1" code="
+        fn greet(name: String) -> String {
+            return \"Greetings, \" + name + \"! Welcome to LLM.lang!\";
+        }
+        ";
+        
+        // Call the modified function
+        result = greet("World");
+        print("Modified function result: " + result);
+        
+        // Demonstrate adding a new function
+        print("\nAdding a new function...");
+        @modify target="examples/self_modifying.llm" operation="insert" path="0.0" position="2" code="
+        fn farewell(name: String) -> String {
+            return \"Goodbye, \" + name + \"! See you next time!\";
+        }
+        ";
+        
+        // Call the new function
+        var goodbye = farewell("World");
+        print("New function result: " + goodbye);
+        
+        // Demonstrate modifying an attribute
+        print("\nModifying an attribute...");
+        @modify target="examples/self_modifying.llm" operation="modify" path="0" name="name" value="SelfModifyingProgram";
+        
+        print("Context name modified from 'MainProgram' to 'SelfModifyingProgram'");
+        
+        // Demonstrate more complex modifications
+        print("\nDemonstrating more complex modifications...");
+        
+        // Add a counter variable
+        @modify target="examples/self_modifying.llm" operation="insert" path="0.0" position="1" code="
+        var counter = 0;
+        ";
+        
+        // Add a function that uses and increments the counter
+        @modify target="examples/self_modifying.llm" operation="insert" path="0.0" position="3" code="
+        fn count() -> Int {
+            counter += 1;
+            return counter;
+        }
+        ";
+        
+        // Call the counter function multiple times
+        print("Counter: " + toString(count()));
+        print("Counter: " + toString(count()));
+        print("Counter: " + toString(count()));
+        
+        print("\nSelf-modification complete!");
+    }
+}
