@@ -277,7 +277,8 @@ impl Parser {
     fn parse_statement(&mut self) -> ParserResult<Node> {
         if self.match_keyword("var") || self.match_keyword("Int") || self.match_keyword("Float") || 
            self.match_keyword("String") || self.match_keyword("Bool") || self.match_keyword("List") || 
-           self.match_keyword("Map") || self.match_keyword("Vector") || self.match_keyword("Context") {
+           self.match_keyword("Map") || self.match_keyword("Vector") || self.match_keyword("Context") ||
+           self.match_token(TokenKind::SemanticType) {
             // Parse a variable declaration
             self.parse_variable_declaration()
         } else if self.match_keyword("if") {
@@ -354,7 +355,7 @@ impl Parser {
     fn parse_variable_declaration(&mut self) -> ParserResult<Node> {
         // We've already consumed either the "var" keyword or a type keyword
         
-        // Get the type if we've consumed a type keyword
+        // Get the type if we've consumed a type keyword or semantic type
         let mut typ = None;
         let token = self.previous().unwrap();
         
@@ -374,6 +375,9 @@ impl Parser {
                     token.location.clone(),
                 )),
             });
+        } else if token.kind == TokenKind::SemanticType {
+            // We've consumed a semantic type, so set the type
+            typ = Some(Type::Semantic(token.value.clone()));
         }
         
         // Parse the variable name
@@ -678,23 +682,40 @@ impl Parser {
         // Parse the colon
         self.consume_delimiter(":", "Expected ':' after 'intent'")?;
         
-        // Parse the intent expression
-        let expression = self.parse_expression()?;
-        
-        // Consume the semicolon
-        self.consume_delimiter(";", "Expected ';' after intent expression")?;
-        
         // Create an intent statement node
         let location = self.current_location();
         let mut intent_statement = Node {
             kind: NodeKind::Intent,
-            location,
+            location: location.clone(),
             children: Vec::new(),
             attributes: std::collections::HashMap::new(),
         };
         
-        // Add the expression as a child
-        intent_statement.children.push(Box::new(expression));
+        // Collect all tokens until the semicolon as the intent text
+        let mut intent_text = String::new();
+        
+        while !self.check_delimiter(";") && !self.is_at_end() {
+            let token = self.advance().unwrap();
+            intent_text.push_str(&token.value);
+            intent_text.push(' ');
+        }
+        
+        // Consume the semicolon
+        self.consume_delimiter(";", "Expected ';' after intent expression")?;
+        
+        // Create a natural language node for the intent text
+        let mut natural = Node {
+            kind: NodeKind::NaturalLanguage,
+            location: location.clone(),
+            children: Vec::new(),
+            attributes: std::collections::HashMap::new(),
+        };
+        
+        // Add the value attribute
+        natural.attributes.insert("value".to_string(), intent_text.trim().to_string());
+        
+        // Add the natural language node as a child
+        intent_statement.children.push(Box::new(natural));
         
         Ok(intent_statement)
     }
@@ -1397,6 +1418,23 @@ impl Parser {
             natural.attributes.insert("value".to_string(), token.value.clone());
             
             Ok(natural)
+        } else if self.match_token(TokenKind::Semantic) {
+            // Parse a semantic token as an expression
+            let token = self.previous().unwrap();
+            
+            // Create a semantic node
+            let location = self.current_location();
+            let mut semantic = Node {
+                kind: NodeKind::Semantic,
+                location,
+                children: Vec::new(),
+                attributes: std::collections::HashMap::new(),
+            };
+            
+            // Add the token attribute
+            semantic.attributes.insert("token".to_string(), token.value.clone());
+            
+            Ok(semantic)
         } else if self.match_token(TokenKind::Identifier) {
             // Parse an identifier
             let token = self.previous().unwrap();
