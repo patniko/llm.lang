@@ -5,6 +5,7 @@
 //! and context functions.
 
 use std::collections::HashMap;
+use std::io::Write;
 use crate::Value;
 use crate::runtime::error::RuntimeError;
 use crate::utils::SourceLocation;
@@ -91,7 +92,8 @@ impl StdLib {
         }
         
         for arg in arguments {
-            println!("{}", Self::value_to_string(&arg));
+            // Use eprintln! to print to stderr which is not buffered
+            eprintln!("{}", Self::value_to_string(&arg));
         }
         
         Ok(Value::Void)

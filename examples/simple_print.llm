@@ -1,0 +1,7 @@
+// simple_print.llm - A simple program to test the print function
+
+context MainProgram {
+    fn main() {
+        print("Hello, World!");
+    }
+}

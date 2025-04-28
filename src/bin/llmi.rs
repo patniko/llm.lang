@@ -96,9 +96,10 @@ fn execute_source(source: &str, filename: &str, options: ExecuteOptions, show_st
 
     match execute(source, options) {
         Ok(result) => {
-            // Print the result
+            // Print the result (only if it's not from a print function)
             match result.value {
                 Value::Void => {}
+                Value::Context(_) => {} // Don't print context values as they're just the return value of the program
                 _ => println!("{}", format_value(&result.value)),
             }
 

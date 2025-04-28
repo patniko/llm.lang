@@ -95,15 +95,9 @@ pub fn execute(source: &str, options: ExecuteOptions) -> Result<ExecutionResult,
     let value = engine.execute(analyzed_ast)?;
     
     // Create the execution result
-    let stats = ExecutionStats {
-        execution_time: 0, // TODO: Implement execution time tracking
-        peak_memory: 0,    // TODO: Implement memory usage tracking
-        instructions: 0,   // TODO: Implement instruction counting
-    };
-    
     let result = ExecutionResult {
         value,
-        stats,
+        stats: engine.get_stats(),
     };
     
     Ok(result)

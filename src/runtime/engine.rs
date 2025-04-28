@@ -98,6 +98,15 @@ pub struct Engine {
 }
 
 impl Engine {
+    /// Get the current execution statistics
+    pub fn get_stats(&self) -> crate::ExecutionStats {
+        crate::ExecutionStats {
+            execution_time: self.start_time.map_or(0, |t| t.elapsed().as_millis() as u64),
+            peak_memory: self.peak_memory,
+            instructions: self.instructions,
+        }
+    }
+
     /// Create a new execution engine
     pub fn new(options: EngineOptions) -> Self {
         let mut engine = Self {
@@ -1104,7 +1113,12 @@ impl Engine {
                 let stdlib = crate::stdlib::StdLib::new();
                 if let Some(function) = stdlib.get_function(&name) {
                     // Call the standard library function
-                    return function(arguments);
+                    let result = function(arguments);
+                    
+                    // Increment the instruction count for stdlib function calls
+                    self.instructions += 1;
+                    
+                    return result;
                 }
                 
                 // Look up the function

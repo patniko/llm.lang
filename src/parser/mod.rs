@@ -1581,6 +1581,9 @@ impl Parser {
             grouping.children.push(Box::new(expr));
             
             Ok(grouping)
+        } else if self.match_delimiter("[") {
+            // Parse an array literal
+            self.parse_array_literal()
         } else {
             // Unexpected token
             let token = self.peek().unwrap();
@@ -1814,6 +1817,46 @@ impl Parser {
         } else {
             SourceLocation::new(0, 0, 0, 0, "")
         }
+    }
+    
+    /// Parse an array literal
+    fn parse_array_literal(&mut self) -> ParserResult<Node> {
+        // We've already consumed the opening bracket '['
+        
+        // Create an array literal node
+        let location = self.current_location();
+        let mut array = Node {
+            kind: NodeKind::Literal,
+            location,
+            children: Vec::new(),
+            attributes: std::collections::HashMap::new(),
+        };
+        
+        // Add the type attribute
+        array.attributes.insert("type".to_string(), "List".to_string());
+        
+        // Parse the array elements
+        let mut elements = Vec::new();
+        
+        if !self.check_delimiter("]") {
+            // Parse the first element
+            elements.push(self.parse_expression()?);
+            
+            // Parse additional elements
+            while self.match_delimiter(",") {
+                elements.push(self.parse_expression()?);
+            }
+        }
+        
+        // Consume the closing bracket
+        self.consume_delimiter("]", "Expected ']' after array elements")?;
+        
+        // Add the elements as children
+        for element in elements {
+            array.children.push(Box::new(element));
+        }
+        
+        Ok(array)
     }
 }
 
