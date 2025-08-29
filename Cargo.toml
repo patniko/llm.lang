@@ -37,14 +37,14 @@ colored = "2.0"
 logos = "0.13"
 chumsky = "0.9"
 
-# NLP dependencies
-rust-bert = "0.20"
-tokenizers = "0.13"
-rust_tokenizers = "8.0"
+# NLP dependencies (temporarily disabled for testing)
+# rust-bert = "0.20"
+# tokenizers = "0.13"
+# rust_tokenizers = "8.0"
 
-# Vector operations
+# Vector operations (temporarily disabled for testing)
 ndarray = "0.15"
-faiss = "0.10"  # For vector similarity search
+# faiss = "0.10"  # For vector similarity search
 
 # Async runtime
 tokio = { version = "1.28", features = ["full"] }

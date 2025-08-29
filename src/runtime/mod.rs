@@ -93,6 +93,7 @@ mod tests {
             parallel: true,
             vectors: true,
             nlp: true,
+            self_modifying: true,
         };
         
         let runtime = Runtime::new(options);
