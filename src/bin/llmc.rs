@@ -28,7 +28,7 @@ struct Cli {
     output: Option<PathBuf>,
 
     /// Whether to optimize the compiled code
-    #[clap(short, long)]
+    #[clap(long)]
     optimize: bool,
 
     /// The optimization level (0-3)
