@@ -10,6 +10,16 @@ The test suite verifies that:
 3. CLI tools (llmc and llmi) work correctly with example files
 4. The entire toolchain works end-to-end
 
+## Important Note
+
+**To run the tests successfully, you need to use the `--no-default-features` flag to avoid heavy ML dependencies (PyTorch, etc.) that require external system libraries.**
+
+```bash
+cargo test --no-default-features
+```
+
+This disables features like `rust-bert`, `faiss`, and other ML libraries that require system dependencies to be installed.
+
 ## Test Structure
 
 ### Unit Tests (`src/`)
