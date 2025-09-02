@@ -37,14 +37,14 @@ colored = "2.0"
 logos = "0.13"
 chumsky = "0.9"
 
-# NLP dependencies
-rust-bert = "0.20"
-tokenizers = "0.13"
-rust_tokenizers = "8.0"
+# NLP dependencies (optional - heavy dependencies)
+rust-bert = { version = "0.20", optional = true }
+tokenizers = { version = "0.13", optional = true }
+rust_tokenizers = { version = "8.0", optional = true }
 
-# Vector operations
-ndarray = "0.15"
-faiss = "0.10"  # For vector similarity search
+# Vector operations (optional - heavy dependencies)
+ndarray = { version = "0.15", optional = true }
+faiss = { version = "0.10", optional = true }
 
 # Async runtime
 tokio = { version = "1.28", features = ["full"] }
@@ -64,7 +64,9 @@ test-case = "3.1"
 default = []
 python_interop = ["pyo3"]
 javascript_interop = ["deno_core"]
-full = ["python_interop", "javascript_interop"]
+nlp = ["rust-bert", "tokenizers", "rust_tokenizers"]
+vectors = ["ndarray", "faiss"]
+full = ["python_interop", "javascript_interop", "nlp", "vectors"]
 
 [profile.release]
 lto = true
